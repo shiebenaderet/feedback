@@ -12,6 +12,13 @@ export default defineConfig({
     // The Firestore security-rules test needs a running emulator (JDK 21+).
     // It is excluded from the default unit-test run and executed explicitly via
     // the "test:rules" script (firebase emulators:exec ...).
-    exclude: ['**/node_modules/**', '**/dist/**', 'src/firebase/rules.test.ts'],
+    // `.worktrees/**` holds isolated git worktrees whose tests must not be
+    // re-discovered by the root checkout.
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.worktrees/**',
+      'src/firebase/rules.test.ts',
+    ],
   },
 });
