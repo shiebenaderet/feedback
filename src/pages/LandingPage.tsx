@@ -1,16 +1,24 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { signInWithGoogle } from '../auth/authService';
+import { useAuth } from '../auth/useAuth';
 
 export default function LandingPage() {
+  const { status } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Once signed in, leave the public landing page for the app.
+  if (status === 'signedIn') {
+    return <Navigate to="/home" replace />;
+  }
 
   async function handleSignIn() {
     setError(null);
     setBusy(true);
     try {
       await signInWithGoogle();
-      // On success, useAuth's onAuthStateChanged drives the route change.
+      // On success, useAuth flips to 'signedIn' and the redirect above fires.
     } catch {
       setError('Sign-in failed. Please try again.');
     } finally {
