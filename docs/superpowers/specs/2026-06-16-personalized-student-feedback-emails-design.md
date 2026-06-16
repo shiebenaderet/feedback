@@ -32,6 +32,7 @@ built so this vision slots in later with no rewrite.
 | Backend | Firebase (Auth + Firestore + Hosting) | Least glue code; built-in Google sign-in and per-user security rules; free at this scale. |
 | Persistence | Auto-save to Firestore | "Save my work across sessions" — quit mid-class and resume. |
 | Send infra | Send from the browser | No server code, no Blaze plan; keep tab open ~30s per class. |
+| Send modes | Gmail send **or** copy-paste fallback | Automated send when OAuth works; if the district blocks third-party apps, the finished messages are handed over to copy-paste. Chosen per batch. |
 | Send safety | Preview list + explicit confirm | Catch a wrong email or unfinished message before send. |
 | Spelling | Browser-native, live as you type | Free, private, familiar red-underline. |
 | Grammar | Local/offline pass on review screen | Catches grammar/style before send; **no student data leaves the device**. |
@@ -101,16 +102,32 @@ teacher (the signed-in user; uid is the owner key)
    shared header and spellcheck-enabled editor (middle) · tag-filtered bank picker (right).
    One student at a time; **Save & next** advances; every edit auto-saves to Firestore.
 6. **Review & send** — full batch laid out; per-student preview; **local grammar pass
-   flags issues here**; explicit confirm; Gmail send with live progress bar and a
-   failures-to-retry list.
+   flags issues here**; explicit confirm; then either **Mode A** (Gmail send with live
+   progress bar and a failures-to-retry list) or **Mode B** (copy-paste fallback with
+   per-message Copy and mark-as-sent). See Send Flow below.
 
 ## Send Flow
 
+The whole app up to this point is identical regardless of how the email leaves the
+teacher's hands. Only the final step branches into two **send modes**, chosen per batch:
+
+**Mode A — Gmail send (default, when OAuth is permitted):**
 1. Teacher finishes a batch, clicks **Send**.
 2. Confirmation screen: recipient list (spot-checkable) + "Send all".
 3. Per student, send via Gmail API from the browser; mark each `sent`/`failed` as it goes,
    with a live progress bar.
 4. Failures listed at the end; retry touches **only** the failed messages.
+
+**Mode B — Copy-paste fallback (when the district blocks third-party OAuth apps):**
+1. Same review and confirm.
+2. Instead of transmitting, the app presents each student's finished message with their
+   email address and a one-click **Copy** button (and a "copy all as a list" option), so
+   the teacher pastes into Gmail/their mail client themselves.
+3. The teacher marks each as sent (or "mark all sent") to keep the batch/history status
+   accurate, since the app can't observe the actual send in this mode.
+
+Mode is a per-batch toggle. If OAuth is blocked at sign-in, the app defaults to Mode B and
+hides the automated-send path. Everything upstream (roster, bank, compose, review) is shared.
 
 ## Error Handling & Data Safety
 
@@ -148,7 +165,8 @@ Built in data-flow order so each step is testable with real data from the previo
 2. **Roster** — CSV import with preview → students saved → roster view.
 3. **Bank** — create/edit/tag/filter comment entries.
 4. **Compose** — three-panel screen, auto-save, Save & next.
-5. **Review & send** — preview, local grammar pass, confirm, Gmail send with progress + retry.
+5. **Review & send** — preview, local grammar pass, confirm; **Mode A** Gmail send with
+   progress + retry, **and Mode B** copy-paste fallback. Both ship in the pilot.
 
 By step 2 a class loads; by step 5 the end-of-year pilot runs end to end. Stopping after
 step 3 still yields a useful roster + bank.
@@ -164,5 +182,7 @@ step 3 still yields a useful roster + bank.
 ## Pre-Build Verification
 
 - **District OAuth policy:** Confirm the school Google Workspace admin permits third-party
-  OAuth apps with the Gmail-send scope. If blocked, request an allowlist for the app, or
-  fall back to "generate drafts" sending. Verify before building, not at launch.
+  OAuth apps with the Gmail-send scope. If blocked, the app uses **Mode B (copy-paste
+  fallback)** — the finished messages are handed over to paste manually, so the pilot still
+  works. (Optionally request an app allowlist from the admin to re-enable automated send.)
+  Worth checking before building, but the copy-paste fallback means a block is not a blocker.
