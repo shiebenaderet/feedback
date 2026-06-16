@@ -18,8 +18,11 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/.worktrees/**',
+      // Emulator-backed tests (need the Firestore emulator + JDK 21+); run via test:rules.
       'src/firebase/rules.test.ts',
       'src/bank/bankRules.test.ts',
+      'src/firebase/batches.test.ts',
+      'src/firebase/messages.test.ts',
     ],
   },
 });
