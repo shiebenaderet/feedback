@@ -52,7 +52,13 @@ React Testing Library, PapaParse.
 | `npm run dev` | Start the dev server. |
 | `npm test` | Run the unit test suite (Vitest). |
 | `npm run build` | Type-check and build the production bundle. |
+| `npm run deploy` | Build and deploy the live site to Firebase Hosting (see SETUP.md Step 8). |
 | `npm run test:rules` | Run the Firestore security-rules test (needs the emulator + **JDK 21+**). |
+
+## Live site
+
+Once deployed (SETUP.md Step 8), the app is live at `https://YOUR_PROJECT_ID.web.app`.
+The landing page is public; signing in with an allowlisted Google account reveals the tool.
 
 ## Testing the security rules
 

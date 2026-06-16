@@ -133,6 +133,46 @@ npx firebase deploy --only firestore:rules --project YOUR_PROJECT_ID
 
 ---
 
+## Step 8 — Publish the live site (Firebase Hosting)
+
+This puts your app on the web at `https://YOUR_PROJECT_ID.web.app`. The landing page is
+public; signing in reveals the tool (only allowlisted emails get in).
+
+1. **Enable Hosting** in the Console: Build → **Hosting** → **Get started** → click through
+   (you can ignore the CLI snippets it shows; we've already set things up).
+
+2. **Tell the CLI which project this is.** From the repo root:
+
+   ```bash
+   npx firebase login                       # if you haven't already
+   npx firebase use --add                   # pick YOUR_PROJECT_ID, give it the alias "default"
+   ```
+
+   This creates a `.firebaserc` file pointing at your project.
+
+3. **Build and deploy:**
+
+   ```bash
+   npm run deploy
+   ```
+
+   This runs `npm run build` (producing `dist/`) and `firebase deploy --only hosting`.
+   When it finishes, it prints your live URL: **`https://YOUR_PROJECT_ID.web.app`**. 🎉
+
+4. **Authorize the live domain for sign-in:** Firebase Console → Authentication → **Settings**
+   → **Authorized domains** → add `YOUR_PROJECT_ID.web.app` (and `YOUR_PROJECT_ID.firebaseapp.com`).
+   Otherwise Google sign-in will refuse on the live site with `auth/unauthorized-domain`.
+
+> **Important — your config in the deployed build.** Vite bakes `.env.local` values into the
+> build at `npm run build` time. The Firebase web config (`apiKey`, etc.) is *meant* to be
+> public — it identifies your project, it is not a secret. Your **security rules** (Step 7)
+> are what actually protect the data. Just make sure `.env.local` is filled in before you
+> `npm run deploy`.
+
+Re-deploy any time with `npm run deploy`.
+
+---
+
 ## Later: Gmail sending
 
 When we build the Send step, sending email "as you" needs the **Gmail API** enabled and an
