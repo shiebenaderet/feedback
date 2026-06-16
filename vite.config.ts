@@ -19,6 +19,7 @@ export default defineConfig({
       '**/dist/**',
       '**/.worktrees/**',
       'src/firebase/rules.test.ts',
+      'src/bank/bankRules.test.ts',
     ],
   },
 });
