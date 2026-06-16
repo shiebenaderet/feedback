@@ -13,6 +13,10 @@ vi.mock('./auth/authService', () => ({
   signOutTeacher: vi.fn(() => Promise.resolve()),
 }));
 
+// The /roster route transitively imports firebase/config (which calls getAuth at
+// load); stub it so the route table can be rendered without a real Firebase app.
+vi.mock('./firebase/config', () => ({ db: { __fake: true }, auth: { __fake: true } }));
+
 import { AppRoutes } from './App';
 
 function renderAt(path: string, auth: { status: string; user: unknown }) {

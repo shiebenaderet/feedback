@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
+import { RosterPage } from './pages/RosterPage';
 import RequireAuth from './auth/RequireAuth';
 
 /** Route table, exported separately so tests can wrap it in a MemoryRouter. */
@@ -13,6 +14,14 @@ export function AppRoutes() {
         element={
           <RequireAuth>
             <HomePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/roster"
+        element={
+          <RequireAuth>
+            <RosterPage />
           </RequireAuth>
         }
       />
