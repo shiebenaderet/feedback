@@ -67,6 +67,27 @@ Tasks are renumbered with a step prefix and run in dependency order. The repair 
 
 ---
 
+## Reconciliation & Conventions (BINDING — read before any task)
+
+These tasks were drafted in parallel, so a few of them invented their own imports/types at module boundaries. The following rules are **binding** and override any conflicting code inside a task body. When a task's code disagrees with a rule here, follow the rule (and fix the code as you implement).
+
+1. **One canonical module per concern — never create a stub at a path another task owns.** If a task's test mocks a module, mock the *real* one; do not create a second, throwing implementation file at the same path. The canonical owners are:
+   - **Google sign-in:** `src/auth/authService.ts` (Task F4) — exports `signInWithGoogle`, `signOutTeacher`. Any task needing re-auth imports from `../auth/authService`, **not** `../firebase/auth`.
+   - **Batch status:** `src/firebase/batches.ts` (Task C21) — exports `setBatchStatus(db, uid, batchId, status)` (**4 args**, `db` first per Decision 3). All callers use this 4-arg form; in component tests it is injected as a prop or mocked, never redefined with a different arity.
+   - **Gmail sending:** `src/send/gmailSender.ts` (Task S6) — exports `createGmailSender(config) → (message) => Promise<{id}>`. There is **no** `sendOne` export. The send runner obtains a `send` function from `createGmailSender` (injected/mocked in tests); it does **not** import a free `sendOne`.
+
+2. **One send model.** The batch-send machine of Tasks S3/S4 is canonical: `SendState`, `SendableMessage`, and `runSend(state, toSend, send)` where `send` is the function returned by `createGmailSender`. `SendProgressPanel` lives at `src/send/SendProgressPanel.tsx` (Task S8). The re-auth (S21) and review→send container (S20) tasks **adapt to this model**: they map each `MessageDraft` to a `SendableMessage` (`{ id: studentId, email, finalText }`) and call the S3/S4 `runSend`. Do **not** create a second `runSend`, a second `SendProgressPanel`, or a `useSendRunner` with a different signature — reuse S3/S4/S8.
+
+3. **All shared types import from `src/types.ts` (Task F0).** `Student`, `ClassMeta`, `Slot`, `SlotKind`, `BankTags`, `BankEntry`, `MessageDraft`, `Batch`, and `AUTO_SLOT_KEYS` are declared **only** there. Tasks K1/K2/K4 and C1/C2 must `import` these rather than re-declaring `BankTags`/`BankEntry`/`Slot`/`*Like` shapes. In particular:
+   - `BankTags` is **all-optional** (`type?`, `area?`, `objective?`, `tone?`) — the bank form/repo must accept optional tags; there is no required-string variant.
+   - `Slot.hint` is **optional**.
+   - The auto-slot keys are `AUTO_SLOT_KEYS` from `src/types.ts` — `extractSlots` (K1) and `fillSlots` (C1) import that constant instead of hardcoding `['name','semester']`.
+   - `extractSlots` (K1) returns `Slot[]` using the canonical `Slot`; the bank does not re-export a local `Slot`.
+
+4. **`BankEntryInput`** (the create-form payload, no `id`) may live in `src/bank/types.ts`, but it must be defined as `Omit<BankEntry, 'id'>` using the canonical `BankEntry`, so its `tags` are the canonical (optional) `BankTags`. The K8 seed entries (canonical `BankEntry`) therefore persist through K4 without a type mismatch.
+
+---
+
 
 ## Step F — Foundation
 
@@ -7653,12 +7674,13 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import type { MessageDraft } from '../types';
 import { useSendRunner } from './useSendRunner';
 
-// Mock the Gmail sender and the Google sign-in helper.
-const sendOne = vi.fn();
+// `send` (the function returned by createGmailSender, Task S6) is INJECTED into the
+// hook, so we pass a vi.fn() directly — no gmailSender module mock, no `sendOne`.
+// Only the real Google sign-in helper (Task F4) is module-mocked.
+const send = vi.fn();
 const signInWithGoogle = vi.fn();
 
-vi.mock('./gmailSender', () => ({ sendOne: (...a: unknown[]) => sendOne(...a) }));
-vi.mock('../firebase/auth', () => ({
+vi.mock('../auth/authService', () => ({
   signInWithGoogle: (...a: unknown[]) => signInWithGoogle(...a),
 }));
 
@@ -7668,31 +7690,31 @@ const drafts = (): MessageDraft[] => [
 ];
 
 beforeEach(() => {
-  sendOne.mockReset();
+  send.mockReset();
   signInWithGoogle.mockReset();
 });
 
 describe('useSendRunner — re-auth on token expiry', () => {
   it('on a 401 it halts, surfaces re-auth (does NOT mark a message failed)', async () => {
     // First message: token expired (batch-wide auth error).
-    sendOne.mockRejectedValueOnce({ status: 401, message: 'Invalid Credentials' });
+    send.mockRejectedValueOnce({ status: 401, message: 'Invalid Credentials' });
 
-    const { result } = renderHook(() => useSendRunner(drafts()));
+    const { result } = renderHook(() => useSendRunner(drafts(), send));
     await act(async () => { await result.current.start(); });
 
     await waitFor(() => expect(result.current.needsReauth).toBe(true));
     // Halted before the second message; nothing marked failed.
-    expect(sendOne).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledTimes(1);
     expect(result.current.messages.every((m) => m.status === 'draft')).toBe(true);
     expect(result.current.failures).toHaveLength(0);
   });
 
   it('re-authorize re-runs signInWithGoogle, clears the prompt, and retries the batch', async () => {
-    sendOne.mockRejectedValueOnce({ status: 401 }); // first attempt: token expired
+    send.mockRejectedValueOnce({ status: 401 }); // first attempt: token expired
     signInWithGoogle.mockResolvedValueOnce({ uid: 'teacher-1' });
-    sendOne.mockResolvedValue({ id: 'gmail-msg' }); // after re-auth: all succeed
+    send.mockResolvedValue({ id: 'gmail-msg' }); // after re-auth: all succeed
 
-    const { result } = renderHook(() => useSendRunner(drafts()));
+    const { result } = renderHook(() => useSendRunner(drafts(), send));
     await act(async () => { await result.current.start(); });
     await waitFor(() => expect(result.current.needsReauth).toBe(true));
 
@@ -7705,11 +7727,11 @@ describe('useSendRunner — re-auth on token expiry', () => {
   });
 
   it('a per-message (non-auth) failure marks that message failed and continues', async () => {
-    sendOne
+    send
       .mockRejectedValueOnce({ status: 400, message: 'Invalid To header' }) // s1: bad recipient
       .mockResolvedValueOnce({ id: 'gmail-msg' });                           // s2: ok
 
-    const { result } = renderHook(() => useSendRunner(drafts()));
+    const { result } = renderHook(() => useSendRunner(drafts(), send));
     await act(async () => { await result.current.start(); });
 
     await waitFor(() => expect(result.current.done).toBe(true));
@@ -7735,9 +7757,13 @@ Expected: FAIL — `Cannot find module './useSendRunner'`.
 // src/send/useSendRunner.ts
 import { useState, useCallback, useRef } from 'react';
 import type { MessageDraft } from '../types';
-import { sendOne } from './gmailSender';
-import { signInWithGoogle } from '../firebase/auth';
+import { signInWithGoogle } from '../auth/authService';   // F4 — the real sign-in (Reconciliation rule 1)
 import { isAuthError } from './isAuthError';
+
+// The Gmail send function (from createGmailSender, Task S6). Injected so prod
+// passes the real sender and tests pass a mock. Adapts MessageDraft → the call
+// shape the S6 sender expects.
+export type SendFn = (msg: { id: string; email: string; finalText: string }) => Promise<{ id: string }>;
 
 export interface SendRunner {
   messages: MessageDraft[];
@@ -7754,8 +7780,9 @@ export interface SendRunner {
  * `sent`/`failed` individually. A per-message failure NEVER halts the batch.
  * An AUTH error (isAuthError) DOES halt: it sets `needsReauth` and leaves the
  * remaining messages as `draft` so the retry resends only what's outstanding.
+ * `send` is injected (the function from createGmailSender, Task S6).
  */
-export function useSendRunner(initial: MessageDraft[]): SendRunner {
+export function useSendRunner(initial: MessageDraft[], send: SendFn): SendRunner {
   const [messages, setMessages] = useState<MessageDraft[]>(initial);
   const [needsReauth, setNeedsReauth] = useState(false);
   const [done, setDone] = useState(false);
@@ -7776,7 +7803,7 @@ export function useSendRunner(initial: MessageDraft[]): SendRunner {
     // Resend only messages not already sent.
     for (const m of messagesRef.current.filter((x) => x.status !== 'sent')) {
       try {
-        await sendOne(m);
+        await send({ id: m.studentId, email: m.email, finalText: m.finalText });
         mark(m.studentId, 'sent');
       } catch (err) {
         if (isAuthError(err)) {
@@ -7804,25 +7831,18 @@ export function useSendRunner(initial: MessageDraft[]): SendRunner {
 }
 ```
 
-> Supporting stubs the hook imports (created here so the suite is self-contained; their full behavior is owned by the Mode A send step and the Foundation auth step):
-
-```typescript
-// src/send/gmailSender.ts
-import type { MessageDraft } from '../types';
-// Real impl posts to the Gmail API as the teacher. Tests mock this module.
-export async function sendOne(_msg: MessageDraft): Promise<{ id: string }> {
-  throw new Error('gmailSender.sendOne not wired in this context');
-}
-```
-
-```typescript
-// src/firebase/auth.ts
-// Real impl runs Firebase signInWithPopup(GoogleAuthProvider) with the
-// gmail.send scope. Tests mock this module.
-export async function signInWithGoogle(): Promise<{ uid: string }> {
-  throw new Error('signInWithGoogle not wired in this context');
-}
-```
+> **No stub files (per Reconciliation rule 1).** This hook imports the REAL modules — `signInWithGoogle` from `../auth/authService` (Task F4) and the Gmail `send` function produced by `createGmailSender` from `./gmailSender` (Task S6). Do **not** create `src/firebase/auth.ts` or a `sendOne` export. The hook receives its `send` function by injection so the test mocks it directly:
+>
+> ```typescript
+> // top of src/send/useSendRunner.ts — corrected imports
+> import { signInWithGoogle } from '../auth/authService';       // F4, the real sign-in
+> import type { MessageDraft } from '../types';
+> // The hook is parameterized by an injected `send` (the function returned by
+> // createGmailSender from ./gmailSender, Task S6) so tests pass a mock and prod
+> // passes the real sender. Signature: send(message) => Promise<{ id: string }>.
+> ```
+>
+> In the hook body, replace `await sendOne(m)` with `await send(toSendable(m))`, where `toSendable(m: MessageDraft): SendableMessage = ({ id: m.studentId, email: m.email, finalText: m.finalText })` adapts to the S3/S4 model (Reconciliation rule 2). The test supplies `send` as a `vi.fn()` and mocks `../auth/authService` — no stub module is created.
 
 **Step 4 — Run, expect PASS.**
 
@@ -7830,12 +7850,12 @@ export async function signInWithGoogle(): Promise<{ uid: string }> {
 npx vitest run src/send/useSendRunner.test.tsx
 ```
 
-Expected: PASS — the 401 halts with `needsReauth` (no message marked failed), re-auth calls `signInWithGoogle` and resends to completion, and a non-auth 400 marks only that message failed while the batch continues.
+Expected: PASS — the 401 halts with `needsReauth` (no message marked failed), re-auth calls the real `signInWithGoogle` (mocked in the test) and resends to completion, and a non-auth 400 marks only that message failed while the batch continues.
 
 **Step 5 — Commit.**
 
 ```bash
-git add src/send/useSendRunner.ts src/send/useSendRunner.test.tsx src/send/gmailSender.ts src/firebase/auth.ts
+git add src/send/useSendRunner.ts src/send/useSendRunner.test.tsx
 git commit -m "Add useSendRunner re-auth flow: 401 halts batch + re-prompts signInWithGoogle, then retries"
 ```
 
@@ -7854,45 +7874,39 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import type { Batch } from '../types';
 import { SendPanel } from './SendPanel';
 
-const setBatchStatus = vi.fn();
-vi.mock('../firebase/batches', () => ({
-  setBatchStatus: (...a: unknown[]) => setBatchStatus(...a),
-}));
-
+// No module mock — the panel is pure UI. The container (Task S20) wires the real
+// 4-arg setBatchStatus(db, uid, batchId, 'sending') from src/firebase/batches.ts
+// (Task C21) into onResend. The panel only enforces the gate and calls onResend.
 const draftBatch: Batch = { id: 'b1', classId: 'c1', sharedHeader: 'Hello', status: 'draft' };
 const sentBatch: Batch = { id: 'b1', classId: 'c1', sharedHeader: 'Hello', status: 'sent' };
 
-beforeEach(() => setBatchStatus.mockReset());
-
 describe('SendPanel — double-send protection', () => {
   it('draft batch: primary Send is enabled and there is no re-send affordance', () => {
-    render(<SendPanel batch={draftBatch} onSend={vi.fn()} />);
+    render(<SendPanel batch={draftBatch} onSend={vi.fn()} onResend={vi.fn()} />);
     expect(screen.getByRole('button', { name: /^send all$/i })).not.toBeDisabled();
     expect(screen.queryByRole('button', { name: /send again/i })).toBeNull();
   });
 
   it("sent batch: primary Send is disabled and an explicit 'Send again' affordance is shown", () => {
-    render(<SendPanel batch={sentBatch} onSend={vi.fn()} />);
+    render(<SendPanel batch={sentBatch} onSend={vi.fn()} onResend={vi.fn()} />);
     const send = screen.getByRole('button', { name: /^send all$/i });
     expect(send).toBeDisabled();
     expect(screen.getByText(/already been sent/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /send again/i })).toBeInTheDocument();
   });
 
-  it("sent batch: 'Send again' gates re-send behind a confirm before flipping status", () => {
-    const onSend = vi.fn();
-    render(<SendPanel batch={sentBatch} onSend={onSend} />);
+  it("sent batch: 'Send again' gates re-send behind a confirm before invoking onResend", () => {
+    const onResend = vi.fn();
+    render(<SendPanel batch={sentBatch} onSend={vi.fn()} onResend={onResend} />);
 
-    // First click reveals confirm; it does NOT send or flip status yet.
+    // First click reveals confirm; it does NOT re-send yet.
     fireEvent.click(screen.getByRole('button', { name: /send again/i }));
-    expect(setBatchStatus).not.toHaveBeenCalled();
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onResend).not.toHaveBeenCalled();
     const confirm = screen.getByRole('button', { name: /yes, re-send/i });
 
-    // Confirm: flips the batch back to 'sending' and triggers the send.
+    // Confirm: invokes onResend (the container flips status to 'sending' + sends).
     fireEvent.click(confirm);
-    expect(setBatchStatus).toHaveBeenCalledWith('b1', 'sending');
-    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onResend).toHaveBeenCalledTimes(1);
   });
 });
 ```
@@ -7911,34 +7925,34 @@ Expected: FAIL — `Cannot find module './SendPanel'`.
 // src/review/SendPanel.tsx
 import { useState } from 'react';
 import type { Batch } from '../types';
-import { setBatchStatus } from '../firebase/batches';
 
 export interface SendPanelProps {
   batch: Batch;
   onSend: () => void;
+  // Invoked only after the explicit "Send again" → confirm. The CONTAINER (Task S20)
+  // wires this to: setBatchStatus(db, uid, batch.id, 'sending') then runSend(...).
+  // The panel stays pure UI — no Firebase import, no setBatchStatus call here
+  // (Reconciliation rule 1: setBatchStatus is the 4-arg fn owned by Task C21).
+  onResend: () => void;
 }
 
 /**
  * Review-screen send panel. Reads Batch.status to prevent accidental
  * double-sends: a `sent` batch disables the primary Send action, and re-sending
- * is gated behind an explicit "Send again" + confirm before flipping the batch
- * back to `sending` (via setBatchStatus) and invoking the actual send.
+ * is gated behind an explicit "Send again" + confirm before invoking onResend.
  */
-export function SendPanel({ batch, onSend }: SendPanelProps) {
+export function SendPanel({ batch, onSend, onResend }: SendPanelProps) {
   const alreadySent = batch.status === 'sent';
   const [confirming, setConfirming] = useState(false);
 
-  const handleSend = () => onSend();
-
   const handleResendConfirmed = () => {
-    setBatchStatus(batch.id, 'sending');
     setConfirming(false);
-    onSend();
+    onResend();
   };
 
   return (
     <div>
-      <button type="button" onClick={handleSend} disabled={alreadySent}>
+      <button type="button" onClick={onSend} disabled={alreadySent}>
         Send all
       </button>
 
@@ -7967,9 +7981,10 @@ export function SendPanel({ batch, onSend }: SendPanelProps) {
 }
 ```
 
-> Supporting stub the panel imports (full data-access behavior is owned by the batches CRUD step; it writes `teachers/{uid}/batches/{batchId}.status` per the canonical paths). Created here so the suite is self-contained:
+> The container (Task S20) supplies `onResend` as `async () => { await setBatchStatus(db, uid, batch.id, 'sending'); await runSend(...); await setBatchStatus(db, uid, batch.id, 'sent'); }`, using the real 4-arg `setBatchStatus` from `src/firebase/batches.ts` (Task C21). No stub file is created here. *(Leftover from the superseded draft — ignore any `src/firebase/batches.ts` definition below; the canonical one is Task C21.)*
 
 ```typescript
+// (SUPERSEDED — do NOT create this file; see Task C21 for the real setBatchStatus)
 // src/firebase/batches.ts
 import type { Batch } from '../types';
 // Real impl: setDoc(doc(db, 'teachers', uid, 'batches', batchId), { status }, { merge: true }).
@@ -7985,21 +8000,20 @@ export async function setBatchStatus(_batchId: string, _status: Batch['status'])
 npx vitest run src/review/SendPanel.test.tsx
 ```
 
-Expected: PASS — a `draft` batch shows an enabled "Send all" and no re-send affordance; a `sent` batch shows a disabled "Send all" plus an explicit "Send again" that, only after the "Yes, re-send" confirm, calls `setBatchStatus('b1', 'sending')` and triggers `onSend`.
+Expected: PASS — a `draft` batch shows an enabled "Send all" and no re-send affordance; a `sent` batch shows a disabled "Send all" plus an explicit "Send again" that, only after the "Yes, re-send" confirm, invokes `onResend` (the container then flips status to `'sending'` via the real 4-arg `setBatchStatus` and re-sends).
 
 **Step 5 — Commit.**
 
 ```bash
-git add src/review/SendPanel.tsx src/review/SendPanel.test.tsx src/firebase/batches.ts
-git commit -m "Add SendPanel double-send guard: disable Send on sent batch, gate re-send behind confirm + setBatchStatus"
+git add src/review/SendPanel.tsx src/review/SendPanel.test.tsx
+git commit -m "Add SendPanel double-send guard: disable Send on sent batch, gate re-send behind confirm"
 ```
 
 ---
 
-**Notes on canonical-decision compliance** (file paths returned for reference):
-- `/Users/shiebenaderet/Documents/GitHub/feedback/src/types.ts` — both tasks import `MessageDraft` and `Batch` from here; no shapes re-declared. `Batch.status` is `'draft'|'sending'|'sent'` and re-send flips to `'sending'`, matching the canonical union.
-- `/Users/shiebenaderet/Documents/GitHub/feedback/src/firebase/batches.ts` (`setBatchStatus`) writes under `teachers/{uid}/batches/{batchId}` per Canonical Decision 1; it imports `{ db }` from `src/firebase/config.ts` in its real impl (Decision 3).
-- `/Users/shiebenaderet/Documents/GitHub/feedback/src/firebase/auth.ts` (`signInWithGoogle`) is the Foundation Google-sign-in helper that re-grants the Gmail-send scope; the runner only consumes it.
-- `firestore.rules` is untouched (owned by Foundation Task 9); these tasks add no competing rules.
-- The repo is currently greenfield (only the spec file exists under `docs/superpowers/specs/`), so these blocks define new files; `vitest` + `@testing-library/react` are assumed wired by the Foundation step.
+**Notes on canonical-decision compliance:**
+- `src/types.ts` — both tasks import `MessageDraft` and `Batch` from here; no shapes re-declared. `Batch.status` is `'draft'|'sending'|'sent'` and re-send flips to `'sending'`, matching the canonical union.
+- `setBatchStatus` is the real 4-arg `(db, uid, batchId, status)` from **Task C21** (`src/firebase/batches.ts`), writing under `teachers/{uid}/batches/{batchId}` (Decision 1) and importing `{ db }` from `src/firebase/config.ts` (Decision 3). The panel never calls it directly; the container (S20) does.
+- `signInWithGoogle` is the real **Task F4** helper at `src/auth/authService.ts` (re-grants the Gmail-send scope); the runner only consumes it.
+- `firestore.rules` is untouched (owned by Foundation Task F9); these tasks add no competing rules.
 
