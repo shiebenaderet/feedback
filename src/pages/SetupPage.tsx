@@ -13,7 +13,7 @@ import { AddCourseCard, type NewCourseInput } from '../components/AddCourseCard'
 import { NavBar } from '../components/NavBar';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import type { Course } from '../types';
-import { tokens, panelStyle } from '../ui/theme';
+import { tokens, cardStyle } from '../ui/theme';
 
 /** Firestore/auth are injectable so the smoke test drives it without a backend. */
 export interface SetupPageDeps {
@@ -120,12 +120,33 @@ export function SetupPage({ deps }: { deps?: Partial<SetupPageDeps> }) {
             />
             Show archived courses
           </label>
-          <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: tokens.space(1) }}>
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              display: 'grid',
+              gap: tokens.space(1.5),
+              marginTop: tokens.space(2),
+            }}
+          >
             {courses.map((c) => (
-              <li key={c.id} style={{ ...panelStyle(), display: 'flex', alignItems: 'center', gap: tokens.space(1) }}>
-                <span style={{ flex: 1 }}>
+              <li
+                key={c.id}
+                style={{
+                  ...cardStyle(),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: tokens.space(1),
+                  padding: tokens.space(2),
+                }}
+              >
+                <span style={{ flex: 1, fontWeight: 600 }}>
                   {c.name}
-                  {c.archived ? ' (archived)' : ''}
+                  {c.archived ? (
+                    <span style={{ color: tokens.color.muted, fontWeight: 400 }}> (archived)</span>
+                  ) : (
+                    ''
+                  )}
                 </span>
                 <button type="button" onClick={() => handleRename(c.id)}>
                   Rename
