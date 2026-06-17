@@ -9,3 +9,9 @@ dist/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+
+# Firebase CLI local deploy cache
+.firebase/
+
+# macOS
+.DS_Store
