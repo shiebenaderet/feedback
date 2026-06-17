@@ -8,13 +8,27 @@ describe('seed comment bank', () => {
     expect(SEED_BANK.length).toBeGreaterThanOrEqual(15);
   });
 
-  it('covers all five areas and all four types', () => {
+  it('covers the original five academic areas and all four types', () => {
     const areas = new Set(SEED_BANK.map((e) => e.tags.area));
     const types = new Set(SEED_BANK.map((e) => e.tags.type));
-    expect(areas).toEqual(
-      new Set(['cer', 'discussion', 'research', 'collaboration', 'professionalism']),
-    );
+    // The original slot-based set's areas remain present...
+    for (const a of ['cer', 'discussion', 'research', 'collaboration', 'professionalism']) {
+      expect(areas.has(a), `area ${a}`).toBe(true);
+    }
+    // ...plus the generic comment areas.
+    for (const a of ['contribution', 'attitude', 'questions', 'perseverance']) {
+      expect(areas.has(a), `generic area ${a}`).toBe(true);
+    }
     expect(types).toEqual(new Set(['success', 'growth', 'behavior', 'skill']));
+  });
+
+  it('ships 30 generic, slot-free comments tagged success or growth', () => {
+    const generic = SEED_BANK.filter((e) => e.id.startsWith('gen-'));
+    expect(generic.length).toBe(30);
+    for (const e of generic) {
+      expect(e.slots.length, `${e.id} should be slot-free`).toBe(0);
+      expect(['success', 'growth']).toContain(e.tags.type);
+    }
   });
 
   it('every entry declares slots that exactly match the tokens in its templateText', () => {
