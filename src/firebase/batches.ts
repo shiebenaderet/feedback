@@ -64,3 +64,13 @@ export async function getBatch(
   return snap.data() as Batch;
 }
 
+
+/** Updates editable batch fields (e.g. the shared header) without changing status. */
+export async function updateBatch(
+  db: Firestore,
+  uid: string,
+  batchId: string,
+  patch: Partial<Pick<Batch, 'sharedHeader'>>,
+): Promise<void> {
+  await updateDoc(doc(db, `teachers/${uid}/batches/${batchId}`), patch);
+}
