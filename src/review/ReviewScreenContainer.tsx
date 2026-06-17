@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Batch, MessageDraft } from '../types';
 import { ReviewScreen, type ReviewMessage } from './ReviewScreen';
-import { CopyPastePanel, type CopyPasteMessage } from '../send/CopyPastePanel';
+import { type CopyPasteMessage } from '../send/CopyPastePanel';
+import { SendStepper } from '../send/SendStepper';
 
 export type SendMode = 'A' | 'B';
 
@@ -103,7 +104,7 @@ export function ReviewScreenContainer({
 
       {mode === 'B' && showCopyPaste && (
         <div data-testid="copy-paste-panel">
-          <CopyPastePanel
+          <SendStepper
             messages={toCopyPasteMessages(results, batch.sharedHeader)}
             sent={sentInCopyPaste}
             onMarkSent={(id) =>
