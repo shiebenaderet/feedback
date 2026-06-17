@@ -100,6 +100,8 @@ export interface Period {
  * `tags` so trends are re-derivable under a future taxonomy mapping.
  */
 export interface FeedbackHistoryEntry {
+  /** Owner uid, denormalized so a collectionGroup trends query can filter by it. */
+  ownerUid?: string;
   studentId: string;
   periodId: string;
   courseId: string;
