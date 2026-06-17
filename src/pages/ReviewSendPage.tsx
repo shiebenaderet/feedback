@@ -12,6 +12,7 @@ import { makeRunSend } from '../send/makeRunSend';
 import { ReviewScreenContainer } from '../review/ReviewScreenContainer';
 import type { Batch, MessageDraft } from '../types';
 import type { GmailSender } from '../send/batchSendMachine';
+import { tokens } from '../ui/theme';
 
 const SUBJECT = 'Feedback on your work';
 
@@ -81,7 +82,7 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
     [sendOne, emailById],
   );
 
-  if (error) return <main><p role="alert">{error}</p></main>;
+  if (error) return <main style={{ maxWidth: 1180, margin: ' 0 auto', padding: tokens.space(4) }}><p role="alert">{error}</p></main>;
   if (!batch) return <main><p>Loading…</p></main>;
 
   return (

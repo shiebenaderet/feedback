@@ -24,6 +24,11 @@ function makeDeps() {
     createClass: vi.fn(async () => 'class-new'),
     saveStudents: vi.fn(async () => 1),
     listStudents: vi.fn(async () => studentsInClass),
+    renameClass: vi.fn(async () => {}),
+    archiveClass: vi.fn(async () => {}),
+    deleteClass: vi.fn(async () => {}),
+    updateStudent: vi.fn(async () => {}),
+    deleteStudent: vi.fn(async () => {}),
   };
 }
 
@@ -39,7 +44,9 @@ describe('RosterPage', () => {
     expect(
       await screen.findByRole('button', { name: 'Period 4 U.S. History' }),
     ).toBeInTheDocument();
-    expect(deps.listClasses).toHaveBeenCalledWith({ __fake: true }, 'teacher-1');
+    expect(deps.listClasses).toHaveBeenCalledWith({ __fake: true }, 'teacher-1', undefined, {
+      includeArchived: false,
+    });
   });
 
   it('selecting a class loads its students into the roster table', async () => {
@@ -89,6 +96,21 @@ describe('RosterPage', () => {
     );
     const link = await screen.findByRole("link", { name: /write feedback/i });
     expect(link).toHaveAttribute("href", "/compose/class-a");
+  });
+
+
+  it("archives a class via the Archive button", async () => {
+    const deps = makeDeps();
+    render(
+      <MemoryRouter>
+        <RosterPage deps={deps} />
+      </MemoryRouter>,
+    );
+    const archiveBtn = await screen.findByRole("button", { name: /^archive$/i });
+    fireEvent.click(archiveBtn);
+    await waitFor(() =>
+      expect(deps.archiveClass).toHaveBeenCalledWith({ __fake: true }, "teacher-1", "class-a", true),
+    );
   });
 
 });
