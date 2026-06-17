@@ -4,8 +4,9 @@ import { tokens, tealButtonStyle } from '../ui/theme';
 
 /**
  * App chrome shown on every signed-in page: the "Feedback" wordmark (links Home)
- * plus Home / Bank nav and a Sign out button. Routing-only — no data deps — so it
- * smoke-tests under a bare MemoryRouter.
+ * plus Home nav and a Sign out button. Routing-only — no data deps — so it
+ * smoke-tests under a bare MemoryRouter. (Bank nav returns once BankPage + its
+ * /bank route land.)
  */
 export function NavBar() {
   const linkStyle = { color: tokens.color.subtle, fontWeight: 600, textDecoration: 'none' };
@@ -29,9 +30,6 @@ export function NavBar() {
       <nav style={{ display: 'flex', gap: tokens.space(2), flex: 1 }}>
         <Link to="/home" style={linkStyle}>
           Home
-        </Link>
-        <Link to="/bank" style={linkStyle}>
-          Bank
         </Link>
       </nav>
       <button

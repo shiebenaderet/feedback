@@ -60,25 +60,47 @@ describe('HomePage', () => {
     await waitFor(() => expect(screen.getByText('1 / 3')).toBeInTheDocument());
   });
 
-  it('links each period to Write feedback and Trends', async () => {
+  it('links a populated period to its Roster and Write feedback', async () => {
     render(
       <MemoryRouter>
         <HomePage deps={makeDeps()} />
       </MemoryRouter>,
     );
+    const roster = await screen.findByRole('link', { name: /^roster$/i });
     const write = await screen.findByRole('link', { name: /write feedback/i });
-    const trends = await screen.findByRole('link', { name: /trends/i });
+    expect(roster).toHaveAttribute('href', '/course/course-bio/period/p1/roster');
     expect(write).toHaveAttribute('href', '/course/course-bio/period/p1/compose');
-    expect(trends).toHaveAttribute('href', '/course/course-bio/period/p1/trends');
   });
 
-  it('shows an + Add course card linking to /setup and a Bank entry point', async () => {
+  it('an empty-roster period surfaces "Add students" pointing at the roster', async () => {
+    const deps = { ...makeDeps(), rosterSize: vi.fn(async () => 0) };
+    render(
+      <MemoryRouter>
+        <HomePage deps={deps} />
+      </MemoryRouter>,
+    );
+    const add = await screen.findByRole('link', { name: /add students/i });
+    expect(add).toHaveAttribute('href', '/course/course-bio/period/p1/roster');
+    // With no students there is nothing to write yet — no compose link.
+    expect(screen.queryByRole('link', { name: /write feedback/i })).toBeNull();
+  });
+
+  it('a course with no periods shows an empty state linking to setup', async () => {
+    const deps = { ...makeDeps(), listPeriods: vi.fn(async () => []) };
+    render(
+      <MemoryRouter>
+        <HomePage deps={deps} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText(/no periods yet/i)).toBeInTheDocument();
+  });
+
+  it('shows an + Add course card linking to /setup', async () => {
     render(
       <MemoryRouter>
         <HomePage deps={makeDeps()} />
       </MemoryRouter>,
     );
     expect(await screen.findByRole('link', { name: /add course/i })).toHaveAttribute('href', '/setup');
-    expect(screen.getByRole('link', { name: /^bank$/i })).toHaveAttribute('href', '/bank');
   });
 });

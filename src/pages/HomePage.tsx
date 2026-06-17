@@ -134,25 +134,54 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
           {cards.map(({ course, periods }) => (
             <section key={course.id} style={panelStyle()} aria-label={course.name}>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>{course.name}</h2>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: tokens.space(1) }}>
-                {periods.map((p) => (
-                  <li
-                    key={p.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: tokens.space(1) }}
-                  >
-                    <span style={{ flex: 1 }}>{p.label}</span>
-                    <span style={{ color: tokens.color.muted, fontVariantNumeric: 'tabular-nums' }}>
-                      {p.done} / {p.total}
-                    </span>
-                    <Link to={`/course/${course.id}/period/${p.id}/compose`} style={{ color: tokens.color.teal }}>
-                      Write feedback
-                    </Link>
-                    <Link to={`/course/${course.id}/period/${p.id}/trends`} style={{ color: tokens.color.teal }}>
-                      Trends
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+
+              {periods.length === 0 ? (
+                <p style={{ color: tokens.color.muted, fontSize: 14 }}>
+                  No periods yet.{' '}
+                  <Link to="/setup" style={{ color: tokens.color.teal }}>
+                    Add periods
+                  </Link>
+                </p>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: tokens.space(1.5) }}>
+                  {periods.map((p) => (
+                    <li key={p.id} style={{ display: 'grid', gap: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: tokens.space(1) }}>
+                        <span style={{ flex: 1, fontWeight: 600 }}>{p.label}</span>
+                        <span
+                          style={{ color: tokens.color.muted, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {p.done} / {p.total}
+                        </span>
+                      </div>
+                      {p.total === 0 ? (
+                        // Empty roster: adding students is the only sensible next step.
+                        <Link
+                          to={`/course/${course.id}/period/${p.id}/roster`}
+                          style={{ color: tokens.color.teal, fontWeight: 600 }}
+                        >
+                          + Add students
+                        </Link>
+                      ) : (
+                        <div style={{ display: 'flex', gap: tokens.space(1.5), fontSize: 14 }}>
+                          <Link
+                            to={`/course/${course.id}/period/${p.id}/roster`}
+                            style={{ color: tokens.color.teal }}
+                          >
+                            Roster
+                          </Link>
+                          <Link
+                            to={`/course/${course.id}/period/${p.id}/compose`}
+                            style={{ color: tokens.color.teal }}
+                          >
+                            Write feedback
+                          </Link>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
 
