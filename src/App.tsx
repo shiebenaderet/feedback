@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
+import { SetupPage } from './pages/SetupPage';
 import { RosterPage } from './pages/RosterPage';
 import { ComposePage } from './pages/ComposePage';
 import { ReviewSendPage } from './pages/ReviewSendPage';
@@ -20,15 +21,24 @@ export function AppRoutes() {
         }
       />
       <Route
-        path="/roster"
+        path="/setup"
+        element={
+          <RequireAuth>
+            <SetupPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/course/:courseId/period/:periodId/roster"
         element={
           <RequireAuth>
             <RosterPage />
           </RequireAuth>
         }
       />
+      {/* Phase 4 re-points ComposePage to the year/course/period tree. */}
       <Route
-        path="/compose/:classId"
+        path="/course/:courseId/period/:periodId/compose"
         element={
           <RequireAuth>
             <ComposePage />

@@ -9,6 +9,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/firebase/rules.test.ts', 'src/bank/bankRules.test.ts', 'src/firebase/batches.test.ts', 'src/firebase/messages.test.ts'],
+    include: ['src/firebase/rules.test.ts', 'src/bank/bankRules.test.ts', 'src/firebase/batches.test.ts', 'src/firebase/messages.test.ts', 'src/firebase/rulesRedesign.test.ts'],
   },
 });

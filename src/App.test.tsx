@@ -20,6 +20,7 @@ vi.mock('./firebase/config', () => ({ db: { __fake: true }, auth: { __fake: true
 // Stub the heavy compose/review pages so route tests assert ROUTING only.
 vi.mock('./pages/ComposePage', () => ({ ComposePage: () => <div>compose-page</div> }));
 vi.mock('./pages/ReviewSendPage', () => ({ ReviewSendPage: () => <div>review-page</div> }));
+vi.mock('./pages/SetupPage', () => ({ SetupPage: () => <div>setup-page</div> }));
 
 import { AppRoutes } from './App';
 
@@ -58,10 +59,10 @@ describe('AppRoutes', () => {
 });
 
 describe('protected compose/review routes', () => {
-  it('renders ComposePage at /compose/:classId when signed in', () => {
+  it('renders ComposePage at /compose/:courseId/:periodId when signed in', () => {
     useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
     render(
-      <MemoryRouter initialEntries={['/compose/c1']}>
+      <MemoryRouter initialEntries={['/course/c1/period/p1/compose']}>
         <AppRoutes />
       </MemoryRouter>,
     );
@@ -78,3 +79,16 @@ describe('protected compose/review routes', () => {
     expect(screen.getByText('review-page')).toBeInTheDocument();
   });
 });
+
+describe('setup route', () => {
+  it('renders SetupPage at /setup when signed in', () => {
+    useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
+    render(
+      <MemoryRouter initialEntries={['/setup']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('setup-page')).toBeInTheDocument();
+  });
+});
+

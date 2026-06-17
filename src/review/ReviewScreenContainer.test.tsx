@@ -4,7 +4,7 @@ import type { Batch, MessageDraft } from '../types';
 import { ReviewScreenContainer } from './ReviewScreenContainer';
 
 function makeBatch(): Batch {
-  return { id: 'b1', classId: 'c1', sharedHeader: 'Hi', status: 'draft' };
+  return { id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Hi', status: 'draft' };
 }
 
 function makeMessages(): MessageDraft[] {
@@ -67,4 +67,121 @@ describe('ReviewScreenContainer', () => {
     expect(runSend).not.toHaveBeenCalled();
     expect(setBatchStatus).toHaveBeenCalledWith('sending');
   });
+
+  it('Mode A: fires onSent once per message that resolves as sent', async () => {
+    const onSent = vi.fn(async (_draft: MessageDraft) => {});
+    const setBatchStatus = vi.fn(async () => {});
+    const runSend = vi.fn(async (msgs: MessageDraft[], onProgress: (m: MessageDraft) => void) => {
+      const sent = msgs.map((m) => ({ ...m, status: 'sent' as const }));
+      sent.forEach(onProgress);
+      return sent;
+    });
+
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="A"
+        runSend={runSend}
+        setBatchStatus={setBatchStatus}
+        onSent={onSent}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+
+    await waitFor(() => expect(onSent).toHaveBeenCalledTimes(2));
+    expect(onSent.mock.calls.map((c) => (c[0] as MessageDraft).studentId)).toEqual(['s1', 's2']);
+    // failed messages must NOT write history.
+  });
+
+  it('Mode A: does not fire onSent for a message that failed', async () => {
+    const onSent = vi.fn(async (_draft: MessageDraft) => {});
+    const runSend = vi.fn(async (msgs: MessageDraft[], onProgress: (m: MessageDraft) => void) => {
+      const results = msgs.map((m, i) => ({ ...m, status: (i === 0 ? 'failed' : 'sent') as MessageDraft['status'] }));
+      results.forEach(onProgress);
+      return results;
+    });
+
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="A"
+        runSend={runSend}
+        setBatchStatus={vi.fn(async () => {})}
+        onSent={onSent}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(onSent).toHaveBeenCalledTimes(1));
+    expect((onSent.mock.calls[0][0] as MessageDraft).studentId).toBe('s2');
+  });
+
+  it('Mode B: marking a student sent in the stepper writes that student to history', async () => {
+    const onSent = vi.fn(async (_draft: MessageDraft) => {});
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={vi.fn(async () => {})}
+        onSent={onSent}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i }));
+    await waitFor(() => expect(onSent).toHaveBeenCalledTimes(1));
+    expect((onSent.mock.calls[0][0] as MessageDraft).studentId).toBe('s1');
+  });
+
+  it('Mode B: marking all sent writes every student exactly once', async () => {
+    const onSent = vi.fn(async (_draft: MessageDraft) => {});
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={vi.fn(async () => {})}
+        onSent={onSent}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: /mark all sent/i }));
+    await waitFor(() => expect(onSent).toHaveBeenCalledTimes(2));
+    expect(onSent.mock.calls.map((c) => (c[0] as MessageDraft).studentId).sort()).toEqual(['s1', 's2']);
+  });
+
+  it('Mode B: marking the same student sent twice writes history only once', async () => {
+    const onSent = vi.fn(async (_draft: MessageDraft) => {});
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={vi.fn(async () => {})}
+        onSent={onSent}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+
+    // mark s1 sent, advance, go back, mark s1 again — history must not double-write.
+    fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i })); // s1
+    fireEvent.click(screen.getByRole('button', { name: /previous/i }));
+    fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i })); // s1 again
+    await waitFor(() => expect(onSent).toHaveBeenCalledTimes(1));
+  });
+
 });

@@ -1,48 +1,68 @@
 import type { Firestore } from 'firebase/firestore';
-import type { ClassMeta, BankEntry } from '../types';
+import type { BankEntry, Period } from '../types';
 import type { RosterStudent } from '../roster/RosterTable';
-import { listClasses } from '../data/listClasses';
-import { listStudents } from '../data/listStudents';
+import { listPeriods } from '../data/periods';
+import { listStudents } from '../data/students';
 import { listBankEntries } from '../bank/bankRepo';
 
+export interface ComposeTarget {
+  yearId: string;
+  courseId: string;
+  periodId: string;
+}
+
 export interface ComposeData {
-  classMeta: ClassMeta;
+  period: Period;
+  courseId: string;
+  yearId: string;
   students: RosterStudent[];
   entries: BankEntry[];
 }
 
 export interface LoadComposeDeps {
-  listClasses: typeof listClasses;
+  listPeriods: typeof listPeriods;
   listStudents: typeof listStudents;
-  // Structural signature (not `typeof listBankEntries`) so both the real
-  // bank-repo (bank-local BankEntry ⊆ canonical) and test mocks satisfy it.
+  // Structural signature so both the real bank-repo (bank-local BankEntry ⊆
+  // canonical) and test mocks satisfy it.
   listBankEntries: (db: Firestore, uid: string) => Promise<BankEntry[]>;
 }
+
 const defaultDeps: LoadComposeDeps = {
-  listClasses,
+  listPeriods,
   listStudents,
-  // bank-local BankEntry is structurally assignable to canonical BankEntry.
   listBankEntries: listBankEntries as LoadComposeDeps['listBankEntries'],
 };
 
 /**
- * Loads everything ComposePage needs in one shot. There is no getClass(); we
- * resolve the ClassMeta by id from listClasses (the roster does the same).
- * Bank entries from bankRepo are structurally the canonical BankEntry
- * (tags optional ⊇ bank tags), so they flow straight into ComposeScreen.
+ * Loads everything ComposePage needs for ONE period in one shot. Resolves the
+ * Period (and its denormalized yearId) from listPeriods, the roster from the
+ * nested period path, and the one shared bank. Bank entries from bankRepo are
+ * structurally the canonical BankEntry, so they flow straight into ComposeScreen.
  */
 export async function loadComposeData(
   db: Firestore,
   uid: string,
-  classId: string,
+  target: ComposeTarget,
   deps: LoadComposeDeps = defaultDeps,
 ): Promise<ComposeData> {
-  const [classes, students, entries] = await Promise.all([
-    deps.listClasses(db, uid, undefined, { includeArchived: true }),
-    deps.listStudents(db, uid, classId),
+  const { yearId, courseId, periodId } = target;
+  const [periods, students, entries] = await Promise.all([
+    deps.listPeriods(db, uid, yearId, courseId),
+    deps.listStudents(db, uid, yearId, courseId, periodId),
     deps.listBankEntries(db, uid),
   ]);
-  const classMeta = classes.find((c) => c.id === classId);
-  if (!classMeta) throw new Error(`Class not found: ${classId}`);
-  return { classMeta, students, entries: entries as BankEntry[] };
+  const period = periods.find((p) => p.id === periodId);
+  if (!period) throw new Error(`Period not found: ${periodId}`);
+  return {
+    period,
+    courseId,
+    yearId,
+    students: students.map((s) => ({
+      id: s.id,
+      name: s.name,
+      email: s.email,
+      period: s.period ?? '',
+    })),
+    entries: entries as BankEntry[],
+  };
 }

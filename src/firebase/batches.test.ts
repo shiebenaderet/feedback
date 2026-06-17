@@ -27,7 +27,7 @@ describe('createBatch', () => {
   it('writes teachers/{uid}/batches/{batchId} with draft status and returns the id', async () => {
     const database = db();
     const batchId = await createBatch(database, UID, {
-      classId: 'class-9',
+      yearId: 'y1', courseId: 'class-9', periodId: 'p1',
       sharedHeader: 'End of year — Period 3 Biology',
     });
 
@@ -37,7 +37,7 @@ describe('createBatch', () => {
     const snap = await getDoc(doc(database, `teachers/${UID}/batches/${batchId}`));
     expect(snap.exists()).toBe(true);
     expect(snap.data()).toMatchObject({
-      classId: 'class-9',
+      yearId: 'y1', courseId: 'class-9', periodId: 'p1',
       sharedHeader: 'End of year — Period 3 Biology',
       status: 'draft',
     });
@@ -50,7 +50,7 @@ describe('setBatchStatus', () => {
   it("updates an existing batch's status to 'sending' then 'sent'", async () => {
     const database = db();
     const batchId = await createBatch(database, UID, {
-      classId: 'class-9',
+      yearId: 'y1', courseId: 'class-9', periodId: 'p1',
       sharedHeader: 'EOY',
     });
 
