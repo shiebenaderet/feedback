@@ -11,7 +11,7 @@ vi.mock('../auth/gmailToken', () => ({ getGmailAccessToken: getTokenMock }));
 
 import { ReviewSendPage } from './ReviewSendPage';
 
-const batch = { id: 'b1', classId: 'c1', sharedHeader: 'Q3', status: 'draft' as const };
+const batch = { id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Q3', status: 'draft' as const };
 const messages = [
   { studentId: 's1', name: 'Ana', usedEntries: [], slotValues: {}, finalText: 'Hi Ana', status: 'draft' as const },
 ];

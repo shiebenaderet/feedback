@@ -117,12 +117,12 @@ describe('canonical shared types (src/types.ts)', () => {
   it('Batch has id/classId/sharedHeader/status', () => {
     const batch: Batch = {
       id: 'batch1',
-      classId: 'c1',
+      yearId: 'y1', courseId: 'c1', periodId: 'p1',
       sharedHeader: 'End-of-year note',
       status: 'draft',
     };
     expect(Object.keys(batch)).toEqual(
-      expect.arrayContaining(['id', 'classId', 'sharedHeader', 'status']),
+      expect.arrayContaining(['id', 'periodId', 'sharedHeader', 'status']),
     );
 
     // status is the draft|sending|sent union

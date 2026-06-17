@@ -4,7 +4,7 @@ import type { Batch, MessageDraft } from '../types';
 import { ReviewScreenContainer } from './ReviewScreenContainer';
 
 function makeBatch(): Batch {
-  return { id: 'b1', classId: 'c1', sharedHeader: 'Hi', status: 'draft' };
+  return { id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Hi', status: 'draft' };
 }
 
 function makeMessages(): MessageDraft[] {

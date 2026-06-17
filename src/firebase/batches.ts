@@ -8,7 +8,7 @@ import {
 import type { Batch } from '../types';
 
 /** Fields the caller supplies; id + status are owned by createBatch. */
-export type NewBatchInput = Pick<Batch, 'classId' | 'sharedHeader'>;
+export type NewBatchInput = Pick<Batch, 'yearId' | 'courseId' | 'periodId' | 'sharedHeader'>;
 
 /**
  * Creates a draft batch at teachers/{uid}/batches/{batchId}.
@@ -22,7 +22,9 @@ export async function createBatch(
   const ref = doc(collection(db, `teachers/${uid}/batches`));
   const batch: Batch = {
     id: ref.id,
-    classId: input.classId,
+    yearId: input.yearId,
+    courseId: input.courseId,
+    periodId: input.periodId,
     sharedHeader: input.sharedHeader,
     status: 'draft',
   };
@@ -65,12 +67,12 @@ export async function getBatch(
 }
 
 
-/** Updates editable batch fields (e.g. the shared header) without changing status. */
+/** Updates editable batch fields: shared header and the grading-period stamp. */
 export async function updateBatch(
   db: Firestore,
   uid: string,
   batchId: string,
-  patch: Partial<Pick<Batch, 'sharedHeader'>>,
+  patch: Partial<Pick<Batch, 'sharedHeader' | 'gradingPeriod' | 'label'>>,
 ): Promise<void> {
   await updateDoc(doc(db, `teachers/${uid}/batches/${batchId}`), patch);
 }

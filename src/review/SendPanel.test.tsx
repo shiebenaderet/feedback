@@ -7,8 +7,8 @@ import { SendPanel } from './SendPanel';
 // No module mock — the panel is pure UI. The container (Task S20) wires the real
 // 4-arg setBatchStatus(db, uid, batchId, 'sending') from src/firebase/batches.ts
 // (Task C21) into onResend. The panel only enforces the gate and calls onResend.
-const draftBatch: Batch = { id: 'b1', classId: 'c1', sharedHeader: 'Hello', status: 'draft' };
-const sentBatch: Batch = { id: 'b1', classId: 'c1', sharedHeader: 'Hello', status: 'sent' };
+const draftBatch: Batch = { id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Hello', status: 'draft' };
+const sentBatch: Batch = { id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Hello', status: 'sent' };
 
 describe('SendPanel — double-send protection', () => {
   it('draft batch: primary Send is enabled and there is no re-send affordance', () => {

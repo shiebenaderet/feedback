@@ -56,7 +56,9 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
         const b = await api.getBatch(db, uid, batchId);
         if (!b) throw new Error('Batch not found');
         const msgs = await api.listMessages(db, uid, batchId);
-        const roster = await api.listStudents(db, uid, b.classId);
+        // Phase 4 threads the full year/course/period tree here; for now the
+        // batch's periodId satisfies the (transitional) listStudents signature.
+        const roster = await api.listStudents(db, uid, b.periodId);
         if (!alive) return;
         setBatch(b);
         setMessages(msgs);

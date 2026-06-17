@@ -46,7 +46,9 @@ describe('ComposePage', () => {
     expect(deps.loadComposeData).toHaveBeenCalledWith({ __fake: true }, 'u1', 'c1');
     await waitFor(() =>
       expect(deps.createBatch).toHaveBeenCalledWith({ __fake: true }, 'u1', {
-        classId: 'c1',
+        yearId: 'c1',
+        courseId: 'c1',
+        periodId: 'c1',
         sharedHeader: '',
       }),
     );

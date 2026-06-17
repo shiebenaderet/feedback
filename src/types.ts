@@ -52,9 +52,13 @@ export interface MessageDraft {
 
 export interface Batch {
   id: string;
-  classId: string;
+  yearId: string;
+  courseId: string;
+  periodId: string; // replaces the old classId as the roster target
   sharedHeader: string;
   status: 'draft' | 'sending' | 'sent';
+  gradingPeriod?: GradingPeriod; // stamped at the grading-period step before send
+  label?: string; // optional free-text round label
 }
 
 // AUTO slot keys are exactly: name, semester.

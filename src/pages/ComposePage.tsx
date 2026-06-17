@@ -51,7 +51,17 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         setData(d);
         if (!batchStarted.current) {
           batchStarted.current = true;
-          api.createBatch(db, uid, { classId, sharedHeader: '' }).then((id) => {
+          // Phase 4 re-points this page to the year/course/period route and passes
+          // the real tree ids. Transitionally, the route's id stands in for all three
+          // so createBatch (now tree-keyed) compiles and the old route keeps working.
+          api
+            .createBatch(db, uid, {
+              yearId: classId,
+              courseId: classId,
+              periodId: classId,
+              sharedHeader: '',
+            })
+            .then((id) => {
             if (alive) setBatchId(id);
           });
         }
