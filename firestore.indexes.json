@@ -41,23 +41,25 @@
         { "fieldPath": "periodId", "order": "ASCENDING" },
         { "fieldPath": "studentId", "order": "ASCENDING" }
       ]
-    },
-    {
-      "comment": "TrendsPage period rollup: listPeriodHistory filters periodId on the collection group.",
-      "collectionGroup": "feedbackHistory",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "periodId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "comment": "TrendsPage course rollup: listCourseHistory filters courseId on the collection group.",
-      "collectionGroup": "feedbackHistory",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "courseId", "order": "ASCENDING" }
-      ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "comment": "Single-field collection-group queries: listPeriodHistory (periodId==) and listCourseHistory (courseId==) need their fields indexed at COLLECTION_GROUP scope.",
+      "collectionGroup": "feedbackHistory",
+      "fieldPath": "periodId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "feedbackHistory",
+      "fieldPath": "courseId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
 }
