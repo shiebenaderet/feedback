@@ -1,4 +1,5 @@
 // src/compose/fillSlots.ts
+import { firstName } from './firstName';
 
 export interface Slot {
   key: string;
@@ -36,7 +37,7 @@ function resolveAuto(
 ): string {
   switch (key) {
     case 'name':
-      return student.name;
+      return firstName(student.name);
     case 'semester':
       return classMeta.semester ?? '';
     default:

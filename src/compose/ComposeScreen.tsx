@@ -4,6 +4,7 @@ import { useComposeMessage } from './useComposeMessage';
 import { FillSlotInputs } from './FillSlotInputs';
 import { deriveTypeOptions, filterEntriesByType } from './bankFilter';
 import { useState } from 'react';
+import { firstName } from './firstName';
 import { tokens, cardStyle, chipStyle } from '../ui/theme';
 
 export interface ComposeScreenProps {
@@ -101,7 +102,7 @@ export function ComposeScreen({
           className="label"
           style={{ color: tokens.color.muted, fontSize: 13, marginBottom: tokens.space(1) }}
         >
-          {student.name}'s message
+          {firstName(student.name)}'s message
         </div>
         <pre
           data-testid="final-text"
