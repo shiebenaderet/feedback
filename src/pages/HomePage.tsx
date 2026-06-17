@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import type { Firestore } from 'firebase/firestore';
-import { getOrCreateCurrentYear } from '../data/years';
-import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
+import { resolveActiveYear } from '../data/activeYear';
 import { listCourses } from '../data/courses';
 import { listPeriods } from '../data/periods';
 import { rosterSize } from '../data/students';
@@ -73,9 +72,14 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
 
   useEffect(() => {
     if (!uid || yearId) return;
-    getOrCreateCurrentYear(db, uid, currentSchoolYearLabel())
-      .then((id) => setYearId(id))
-      .catch(() => setError('Could not load the current year.'));
+    let cancelled = false;
+    resolveActiveYear(db, uid)
+      .then((id) => !cancelled && setYearId(id))
+      .catch(() => !cancelled && setError('Could not load the current year.'));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, yearId]);
 
   useEffect(() => {

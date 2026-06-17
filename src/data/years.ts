@@ -18,6 +18,29 @@ const defaultWriteDeps: YearWriteDeps = {
   addDoc: fbAddDoc,
 };
 
+/** Injectable primitives for the years read. */
+export interface YearReadDeps {
+  collection: typeof fbCollection;
+  getDocs: typeof fbGetDocs;
+}
+const defaultReadDeps: YearReadDeps = {
+  collection: fbCollection,
+  getDocs: fbGetDocs,
+};
+
+/** All of a teacher's year docs, newest label first ('2026–27' before '2025–26'). */
+export async function listYears(
+  db: Firestore,
+  uid: string,
+  deps: YearReadDeps = defaultReadDeps,
+): Promise<Year[]> {
+  const { collection, getDocs } = deps;
+  const snap = await getDocs(collection(db, `teachers/${uid}/years`));
+  const years = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Year, 'id'>) }));
+  // Sort by label descending so the most recent academic year comes first.
+  return years.sort((a, b) => (a.label < b.label ? 1 : a.label > b.label ? -1 : 0));
+}
+
 /**
  * Create a year under teachers/{uid}/years and return its new id.
  */

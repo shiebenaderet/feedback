@@ -5,8 +5,7 @@ import { db } from '../firebase/config';
 import { createBatch, updateBatch } from '../firebase/batches';
 import { findDraftBatch } from '../firebase/findDraftBatch';
 import { saveMessageDraft, listMessages } from '../firebase/messages';
-import { getOrCreateCurrentYear } from '../data/years';
-import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
+import { resolveActiveYear } from '../data/activeYear';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
 import { ComposeHistoryPanel } from '../compose/ComposeHistoryPanel';
@@ -43,8 +42,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const { user } = useAuth();
   const uid = deps?.uid ?? user?.uid ?? '';
   const api = {
-    resolveYearId:
-      deps?.resolveYearId ?? ((d, u) => getOrCreateCurrentYear(d, u, currentSchoolYearLabel())),
+    resolveYearId: deps?.resolveYearId ?? ((d, u) => resolveActiveYear(d, u)),
     loadComposeData: deps?.loadComposeData ?? loadComposeData,
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
