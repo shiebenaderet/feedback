@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { signOutTeacher } from '../auth/authService';
-import { tokens, tealButtonStyle } from '../ui/theme';
+import { tokens, tealButtonStyle, navBarStyle } from '../ui/theme';
 
 /**
  * App chrome shown on every signed-in page: the "Feedback" wordmark (links Home)
@@ -10,16 +10,7 @@ import { tokens, tealButtonStyle } from '../ui/theme';
 export function NavBar() {
   const linkStyle = { color: tokens.color.subtle, fontWeight: 600, textDecoration: 'none' };
   return (
-    <header
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: tokens.space(3),
-        padding: `${tokens.space(1.5)}px ${tokens.space(3)}px`,
-        background: tokens.color.panel,
-        borderBottom: `1px solid ${tokens.color.border}`,
-      }}
-    >
+    <header style={navBarStyle()}>
       <Link
         to="/home"
         style={{ ...linkStyle, color: tokens.color.teal, fontSize: 18, letterSpacing: '-0.01em' }}

@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { tokens } from '../ui/theme';
+import { tokens, breadcrumbStyle, breadcrumbSepStyle } from '../ui/theme';
 
 export interface Crumb {
   label: string;
@@ -18,18 +18,15 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <nav
       aria-label="Breadcrumb"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: tokens.space(1),
-        fontSize: 14,
-        color: tokens.color.muted,
-        padding: `${tokens.space(1)}px ${tokens.space(3)}px`,
-      }}
+      style={{ ...breadcrumbStyle(), padding: `${tokens.space(1)}px ${tokens.space(3)}px` }}
     >
       {items.map((c, i) => (
         <Fragment key={`${c.label}-${i}`}>
-          {i > 0 && <span aria-hidden="true">›</span>}
+          {i > 0 && (
+            <span aria-hidden="true" style={breadcrumbSepStyle()}>
+              ›
+            </span>
+          )}
           {c.to ? (
             <Link to={c.to} style={{ color: tokens.color.teal, textDecoration: 'none' }}>
               {c.label}
