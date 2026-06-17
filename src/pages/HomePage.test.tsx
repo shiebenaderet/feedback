@@ -68,8 +68,10 @@ describe('HomePage', () => {
     );
     const roster = await screen.findByRole('link', { name: /^roster$/i });
     const write = await screen.findByRole('link', { name: /write feedback/i });
+    const trends = await screen.findByRole('link', { name: /^trends$/i });
     expect(roster).toHaveAttribute('href', '/course/course-bio/period/p1/roster');
     expect(write).toHaveAttribute('href', '/course/course-bio/period/p1/compose');
+    expect(trends).toHaveAttribute('href', '/course/course-bio/period/p1/trends');
   });
 
   it('an empty-roster period surfaces "Add students" pointing at the roster', async () => {

@@ -176,6 +176,12 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
                           >
                             Write feedback
                           </Link>
+                          <Link
+                            to={`/course/${course.id}/period/${p.id}/trends`}
+                            style={{ color: tokens.color.teal }}
+                          >
+                            Trends
+                          </Link>
                         </div>
                       )}
                     </li>

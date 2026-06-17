@@ -7,6 +7,7 @@ import { ComposePage } from './pages/ComposePage';
 import { ReviewSendPage } from './pages/ReviewSendPage';
 import { BankPage } from './pages/BankPage';
 import { StudentHistoryPage } from './pages/StudentHistoryPage';
+import { TrendsPage } from './pages/TrendsPage';
 import RequireAuth from './auth/RequireAuth';
 
 /** Route table, exported separately so tests can wrap it in a MemoryRouter. */
@@ -68,6 +69,22 @@ export function AppRoutes() {
         element={
           <RequireAuth>
             <StudentHistoryPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/course/:courseId/period/:periodId/trends"
+        element={
+          <RequireAuth>
+            <TrendsPage scope="period" />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/course/:courseId/trends"
+        element={
+          <RequireAuth>
+            <TrendsPage scope="course" />
           </RequireAuth>
         }
       />
