@@ -18,6 +18,7 @@ import { RosterTable, type RosterStudent } from '../roster/RosterTable';
 import type { StudentEditPatch } from '../roster/StudentRowActions';
 import { EMPTY_PARSE_RESULT, type ParseResult } from '../roster/types';
 import type { ClassMeta, Student } from '../types';
+import { tokens } from '../ui/theme';
 
 /**
  * The live Roster screen, wiring together the tested roster units:
@@ -164,7 +165,7 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
   }
 
   return (
-    <main>
+    <main style={{ maxWidth: 1180, margin: ' 0 auto', padding: tokens.space(4) }}>
       <h1>Roster</h1>
       {error && <p role="alert">{error}</p>}
 

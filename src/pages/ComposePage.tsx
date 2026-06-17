@@ -9,6 +9,7 @@ import { ComposeScreen } from '../compose/ComposeScreen';
 import { rosterProgress } from '../compose/rosterProgress';
 import { nextStudentIndex } from '../compose/nextStudentIndex';
 import type { ClassMeta, MessageDraft } from '../types';
+import { tokens } from '../ui/theme';
 
 export interface ComposePageDeps {
   uid: string;
@@ -87,7 +88,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
 
   if (error)
     return (
-      <main>
+      <main style={{ maxWidth: 1180, margin: ' 0 auto', padding: tokens.space(4) }}>
         <p role="alert">{error}</p>
       </main>
     );
