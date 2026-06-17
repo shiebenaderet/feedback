@@ -12,12 +12,17 @@ export type RunSend = (
   onProgress: (m: MessageDraft) => void,
 ) => Promise<MessageDraft[]>;
 
+/** Per-message history sink; fired once per student when their message is sent. */
+export type OnSent = (draft: MessageDraft) => Promise<void> | void;
+
 export interface ReviewScreenContainerProps {
   batch: Batch;
   messages: MessageDraft[];
   mode: SendMode;
   runSend: RunSend;
   setBatchStatus: (status: Batch['status']) => Promise<void> | void;
+  /** Writes the durable feedbackHistory entry for each sent message. */
+  onSent?: OnSent;
 }
 
 /** MessageDraft has no email; the container resolves it from a lookup if available. */
@@ -45,9 +50,10 @@ function toCopyPasteMessages(
 /**
  * Owns the confirm → send orchestration above the leaf ReviewScreen list.
  * Mode A: setBatchStatus('sending') → runSend (feeding the live progress display)
- * → setBatchStatus('sent'). Mode B: setBatchStatus('sending') → reveal the
- * copy-paste panel; runSend is never called. runSend/setBatchStatus/mode are
- * injected props so this is testable without Firebase or Gmail.
+ * → setBatchStatus('sent'); fires onSent for each message that resolved 'sent'.
+ * Mode B: setBatchStatus('sending') → reveal the copy-paste panel; onSent fires
+ * from the stepper's mark-sent. runSend/setBatchStatus/onSent/mode are injected
+ * so this is testable without Firebase or Gmail.
  */
 export function ReviewScreenContainer({
   batch,
@@ -55,11 +61,22 @@ export function ReviewScreenContainer({
   mode,
   runSend,
   setBatchStatus,
+  onSent,
 }: ReviewScreenContainerProps) {
   const [results, setResults] = useState<MessageDraft[]>(messages);
   const [sending, setSending] = useState(false);
   const [showCopyPaste, setShowCopyPaste] = useState(false);
   const [sentInCopyPaste, setSentInCopyPaste] = useState<Record<string, boolean>>({});
+
+  // Guards against double-writing history for a student already recorded.
+  const [historyWritten, setHistoryWritten] = useState<Record<string, boolean>>({});
+
+  function recordHistory(draft: MessageDraft) {
+    if (!onSent) return;
+    if (historyWritten[draft.studentId]) return;
+    setHistoryWritten((prev) => ({ ...prev, [draft.studentId]: true }));
+    void onSent(draft);
+  }
 
   async function onConfirm() {
     // (1) Mark the batch in-flight FIRST, regardless of mode.
@@ -73,15 +90,25 @@ export function ReviewScreenContainer({
     // Mode A: transmit, updating live results as each message resolves.
     setSending(true);
     const sent = await runSend(messages, (m) => {
-      setResults((prev) =>
-        prev.map((r) => (r.studentId === m.studentId ? m : r)),
-      );
+      setResults((prev) => prev.map((r) => (r.studentId === m.studentId ? m : r)));
+      if (m.status === 'sent') recordHistory(m);
     });
     setResults(sent);
     setSending(false);
 
     // (3) Only on completion does the batch flip to 'sent'.
     await setBatchStatus('sent');
+  }
+
+  function markSent(id: string) {
+    setSentInCopyPaste((prev) => ({ ...prev, [id]: true }));
+    const draft = results.find((r) => r.studentId === id);
+    if (draft) recordHistory({ ...draft, status: 'sent' });
+  }
+
+  function markAllSent() {
+    setSentInCopyPaste(Object.fromEntries(results.map((r) => [r.studentId, true])));
+    for (const r of results) recordHistory({ ...r, status: 'sent' });
   }
 
   const sentCount = results.filter((r) => r.status === 'sent').length;
@@ -107,14 +134,8 @@ export function ReviewScreenContainer({
           <SendStepper
             messages={toCopyPasteMessages(results, batch.sharedHeader)}
             sent={sentInCopyPaste}
-            onMarkSent={(id) =>
-              setSentInCopyPaste((prev) => ({ ...prev, [id]: true }))
-            }
-            onMarkAllSent={() =>
-              setSentInCopyPaste(
-                Object.fromEntries(results.map((r) => [r.studentId, true])),
-              )
-            }
+            onMarkSent={markSent}
+            onMarkAllSent={markAllSent}
           />
         </div>
       )}
