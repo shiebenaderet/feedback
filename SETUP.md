@@ -104,7 +104,8 @@ npm run dev
 ```
 
 Open the `localhost` URL it prints. Click **Sign in with Google**, choose your account,
-and you should land on the home page with a **Manage roster** link. 🎉
+and you should land on the home dashboard, where you can set up a course and start a
+roster. 🎉
 
 > If sign-in is rejected, double-check that the email you signed in with exactly matches
 > `VITE_TEACHER_ALLOWLIST` in `.env.local`, then restart `npm run dev`.
@@ -173,11 +174,13 @@ Re-deploy any time with `npm run deploy`.
 
 ---
 
-## Later: Gmail sending
+## Gmail sending (optional)
 
-When we build the Send step, sending email "as you" needs the **Gmail API** enabled and an
-OAuth consent screen. We'll add those instructions then. If your **school Workspace admin**
-blocks third-party apps, the app has a **copy-paste fallback** — so a block won't stop you.
+Sending email "as you" from the Review & send screen needs the **Gmail API** enabled on
+your Firebase/Google Cloud project and an OAuth consent screen with the
+`gmail.send` scope. If you skip this — or if your **school Workspace admin** blocks
+third-party apps — the app automatically falls back to a **copy-paste** flow that walks
+you through each message, so a block never stops you.
 
 ---
 

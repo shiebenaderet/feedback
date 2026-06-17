@@ -8,3 +8,4 @@ dist/
 # Build artifacts (transpiled / incremental caches — regenerated, not source)
 *.tsbuildinfo
 vite.config.js
+vite.config.d.ts
