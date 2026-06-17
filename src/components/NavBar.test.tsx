@@ -8,17 +8,15 @@ vi.mock('../auth/authService', () => ({ signOutTeacher: () => signOutTeacher() }
 import { NavBar } from './NavBar';
 
 describe('NavBar', () => {
-  it('renders the logo and Home link pointing at the right route', () => {
+  it('renders the logo and Home/Bank links pointing at the right routes', () => {
     render(
       <MemoryRouter>
         <NavBar />
       </MemoryRouter>,
     );
     expect(screen.getByText('Feedback')).toBeInTheDocument();
-    // Two "home" links: the Feedback wordmark and the Home nav item both go to /home.
-    screen.getAllByRole('link', { name: /home|feedback/i }).forEach((link) => {
-      expect(link).toHaveAttribute('href', '/home');
-    });
+    expect(screen.getByRole('link', { name: /^home$/i })).toHaveAttribute('href', '/home');
+    expect(screen.getByRole('link', { name: /^bank$/i })).toHaveAttribute('href', '/bank');
   });
 
   it('calls signOutTeacher when Sign out is clicked', () => {

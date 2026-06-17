@@ -5,6 +5,7 @@ import { SetupPage } from './pages/SetupPage';
 import { RosterPage } from './pages/RosterPage';
 import { ComposePage } from './pages/ComposePage';
 import { ReviewSendPage } from './pages/ReviewSendPage';
+import { BankPage } from './pages/BankPage';
 import RequireAuth from './auth/RequireAuth';
 
 /** Route table, exported separately so tests can wrap it in a MemoryRouter. */
@@ -50,6 +51,14 @@ export function AppRoutes() {
         element={
           <RequireAuth>
             <ReviewSendPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/bank"
+        element={
+          <RequireAuth>
+            <BankPage />
           </RequireAuth>
         }
       />
