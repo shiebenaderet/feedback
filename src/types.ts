@@ -100,6 +100,8 @@ export interface Period {
  * `tags` so trends are re-derivable under a future taxonomy mapping.
  */
 export interface FeedbackHistoryEntry {
+  /** Firestore doc id, present on reads (the write path generates it). */
+  id?: string;
   /** Owner uid, denormalized so a collectionGroup trends query can filter by it. */
   ownerUid?: string;
   studentId: string;
