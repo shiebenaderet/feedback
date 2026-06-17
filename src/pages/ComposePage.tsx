@@ -98,8 +98,10 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   // composing (the history collection-group query may need an index).
   const currentStudentId = data?.students[index]?.id;
   useEffect(() => {
+    // Clear immediately so the panel never shows the PREVIOUS student's history
+    // (with the new student's name) during the async read.
+    setStudentHistory([]);
     if (!uid || !data || !currentStudentId) {
-      setStudentHistory([]);
       return;
     }
     let alive = true;

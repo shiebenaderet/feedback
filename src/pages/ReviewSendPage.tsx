@@ -153,7 +153,7 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
   return (
     <>
       <NavBar />
-      <main>
+      <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
         <h1>Review & send · {batch.sharedHeader}</h1>
 
         <GradingPeriodChooser
