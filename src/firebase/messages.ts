@@ -24,3 +24,32 @@ export async function saveMessageDraft(
   );
   await setDoc(ref, draft);
 }
+
+import {
+  collection as fbCollection,
+  getDocs as fbGetDocs,
+} from 'firebase/firestore';
+
+export interface MessageReadDeps {
+  collection: typeof fbCollection;
+  getDocs: typeof fbGetDocs;
+}
+const defaultMessageReadDeps: MessageReadDeps = {
+  collection: fbCollection,
+  getDocs: fbGetDocs,
+};
+
+/** Reads every persisted draft under a batch as MessageDraft[] (keyed by studentId doc id). */
+export async function listMessages(
+  db: Firestore,
+  uid: string,
+  batchId: string,
+  deps: MessageReadDeps = defaultMessageReadDeps,
+): Promise<MessageDraft[]> {
+  const { collection, getDocs } = deps;
+  const snap = await getDocs(
+    collection(db, `teachers/${uid}/batches/${batchId}/messages`),
+  );
+  return snap.docs.map((d) => d.data() as MessageDraft);
+}
+

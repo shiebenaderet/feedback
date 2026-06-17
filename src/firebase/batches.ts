@@ -39,3 +39,38 @@ export async function setBatchStatus(
 ): Promise<void> {
   await updateDoc(doc(db, `teachers/${uid}/batches/${batchId}`), { status });
 }
+
+import {
+  doc as fbDoc,
+  getDoc as fbGetDoc,
+} from 'firebase/firestore';
+
+export interface BatchReadDeps {
+  doc: typeof fbDoc;
+  getDoc: typeof fbGetDoc;
+}
+const defaultBatchReadDeps: BatchReadDeps = { doc: fbDoc, getDoc: fbGetDoc };
+
+/** Reads a single batch by id; returns null when the doc does not exist. */
+export async function getBatch(
+  db: Firestore,
+  uid: string,
+  batchId: string,
+  deps: BatchReadDeps = defaultBatchReadDeps,
+): Promise<Batch | null> {
+  const { doc, getDoc } = deps;
+  const snap = await getDoc(doc(db, `teachers/${uid}/batches/${batchId}`));
+  if (!snap.exists()) return null;
+  return snap.data() as Batch;
+}
+
+
+/** Updates editable batch fields (e.g. the shared header) without changing status. */
+export async function updateBatch(
+  db: Firestore,
+  uid: string,
+  batchId: string,
+  patch: Partial<Pick<Batch, 'sharedHeader'>>,
+): Promise<void> {
+  await updateDoc(doc(db, `teachers/${uid}/batches/${batchId}`), patch);
+}

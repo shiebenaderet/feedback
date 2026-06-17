@@ -1,4 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { createClass } from '../data/createClass';
@@ -120,7 +121,8 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
                   onClick={() => handleSelectClass(c.id)}
                 >
                   {c.name}
-                </button>
+                </button>{' '}
+                <Link to={`/compose/${c.id}`}>Write feedback</Link>
               </li>
             ))}
           </ul>

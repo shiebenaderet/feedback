@@ -130,4 +130,21 @@ describe('canonical shared types (src/types.ts)', () => {
     const done: Batch['status'] = 'sent';
     expect([batch.status, sending, done]).toEqual(['draft', 'sending', 'sent']);
   });
+  it('ClassMeta has an optional archived flag (defaults to absent)', () => {
+    const active: ClassMeta = { id: 'c3', name: 'Period 2 Physics' };
+    expect(active.archived).toBeUndefined();
+
+    const archived: ClassMeta = {
+      id: 'c4',
+      name: 'Period 4 History',
+      semester: 'Fall',
+      archived: true,
+    };
+    expect(archived.archived).toBe(true);
+
+    // still assignable to false
+    const unarchived: ClassMeta = { id: 'c5', name: 'Period 5 Art', archived: false };
+    expect(unarchived.archived).toBe(false);
+  });
+
 });

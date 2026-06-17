@@ -15,6 +15,8 @@ const { signInWithPopup, signOut, FakeGoogleProvider } = vi.hoisted(() => {
     setCustomParameters(p: Record<string, string>) {
       this.params = p;
     }
+    // Static credential extractor used by signInWithGoogle to grab the Gmail token.
+    static credentialFromResult = vi.fn(() => ({ accessToken: 'test-token' }));
   }
   return { signInWithPopup: vi.fn(), signOut: vi.fn(), FakeGoogleProvider };
 });
@@ -27,6 +29,8 @@ vi.mock('firebase/auth', () => ({
 
 // --- Mock our firebase config so importing authService doesn't init real Firebase ---
 vi.mock('../firebase/config', () => ({ auth: { kind: 'auth' } }));
+// --- Mock the token store so the capture side-effect doesn't touch sessionStorage ---
+vi.mock('./gmailToken', () => ({ __setGmailAccessToken: vi.fn() }));
 
 import {
   GMAIL_SEND_SCOPE,
