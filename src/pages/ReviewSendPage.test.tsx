@@ -55,7 +55,7 @@ describe('ReviewSendPage (history + grading period)', () => {
   it('loads the batch, roster from the period path, and the bank', async () => {
     const deps = makeDeps();
     renderAt(deps);
-    await screen.findByLabelText(/grading period/i);
+    await screen.findByRole('button', { name: 'Q1' });
     expect(deps.getBatch).toHaveBeenCalledWith({ __fake: true }, 'u1', 'b1');
     expect(deps.listStudents).toHaveBeenCalledWith({ __fake: true }, 'u1', 'y1', 'co1', 'p4');
     expect(deps.listBankEntries).toHaveBeenCalledWith({ __fake: true }, 'u1');
@@ -64,9 +64,10 @@ describe('ReviewSendPage (history + grading period)', () => {
   it('defaults the grading-period chooser from the batch and persists changes', async () => {
     const deps = makeDeps();
     renderAt(deps);
-    const select = (await screen.findByLabelText(/grading period/i)) as HTMLSelectElement;
-    expect(select.value).toBe('Q1');
-    fireEvent.change(select, { target: { value: 'Q2' } });
+    // The batch's gradingPeriod (Q1) is the pressed chip on load.
+    const q1 = await screen.findByRole('button', { name: 'Q1' });
+    expect(q1).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Q2' }));
     await waitFor(() =>
       expect(deps.updateBatch).toHaveBeenCalledWith({ __fake: true }, 'u1', 'b1', {
         gradingPeriod: 'Q2',
@@ -78,7 +79,7 @@ describe('ReviewSendPage (history + grading period)', () => {
   it('marking a student sent writes feedbackHistory with the batch context', async () => {
     const deps = makeDeps();
     renderAt(deps);
-    await screen.findByLabelText(/grading period/i);
+    await screen.findByRole('button', { name: 'Q1' });
     fireEvent.click(screen.getByRole('button', { name: /send all/i }));
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i }));
