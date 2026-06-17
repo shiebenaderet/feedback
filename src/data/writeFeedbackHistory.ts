@@ -1,6 +1,6 @@
 import {
-  collection as fbCollection,
-  addDoc as fbAddDoc,
+  doc as fbDoc,
+  setDoc as fbSetDoc,
   type Firestore,
 } from 'firebase/firestore';
 import type { BankEntry, FeedbackHistoryEntry, MessageDraft } from '../types';
@@ -9,12 +9,12 @@ import { deriveHistoryTags } from '../feedback/deriveHistoryTags';
 
 /** Injectable Firestore primitives — defaults to the real SDK, overridable in tests. */
 export interface FirestoreWriteDeps {
-  collection: typeof fbCollection;
-  addDoc: typeof fbAddDoc;
+  doc: typeof fbDoc;
+  setDoc: typeof fbSetDoc;
 }
 const defaultDeps: FirestoreWriteDeps = {
-  collection: fbCollection,
-  addDoc: fbAddDoc,
+  doc: fbDoc,
+  setDoc: fbSetDoc,
 };
 
 /** Location of the student in the year→course→period tree. */
@@ -35,6 +35,13 @@ export interface WriteFeedbackHistoryArgs {
   label: string;
   /** Timestamp (ms) the round went out; injected for deterministic tests. */
   sentAt: number;
+  /**
+   * The batch (round) this send belongs to. Combined with the studentId it forms
+   * the DETERMINISTIC history doc id `{batchId}__{studentId}`, so re-sending /
+   * refreshing / reopening the same round OVERWRITES the entry in place instead
+   * of appending a duplicate (which would double-count every trend).
+   */
+  batchId: string;
 }
 
 /**
@@ -44,9 +51,10 @@ export interface WriteFeedbackHistoryArgs {
  * trends are re-derivable under a future mapping.
  *
  * Path: teachers/{uid}/years/{yearId}/courses/{courseId}/periods/{periodId}
- *       /students/{studentId}/feedbackHistory/{entryId}
+ *       /students/{studentId}/feedbackHistory/{batchId}__{studentId}
  *
- * Returns the generated history entry id.
+ * Idempotent per (batch, student): a repeat write overwrites in place.
+ * Returns the history entry id.
  */
 export async function writeFeedbackHistory(
   db: Firestore,
@@ -54,8 +62,8 @@ export async function writeFeedbackHistory(
   args: WriteFeedbackHistoryArgs,
   deps: FirestoreWriteDeps = defaultDeps,
 ): Promise<string> {
-  const { collection, addDoc } = deps;
-  const { draft, bankEntries, tree, gradingPeriod, label, sentAt } = args;
+  const { doc, setDoc } = deps;
+  const { draft, bankEntries, tree, gradingPeriod, label, sentAt, batchId } = args;
 
   const byId = new Map(bankEntries.map((e) => [e.id, e]));
   const resolved = draft.usedEntries
@@ -83,6 +91,8 @@ export async function writeFeedbackHistory(
   };
   if (label) entry.label = label;
 
-  const ref = await addDoc(collection(db, path), entry);
-  return ref.id;
+  // Deterministic id keyed by the round → idempotent re-writes (no duplicates).
+  const entryId = `${batchId}__${draft.studentId}`;
+  await setDoc(doc(db, path, entryId), entry);
+  return entryId;
 }

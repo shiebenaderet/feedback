@@ -25,6 +25,7 @@ describe('makeHistoryWriter', () => {
       gradingPeriod: 'Q1',
       label: 'Unit 3',
       bankEntries: bank,
+      batchId: 'b7',
       now: () => 1718000000000,
       writeFeedbackHistory,
     });
@@ -35,6 +36,7 @@ describe('makeHistoryWriter', () => {
     expect(writeFeedbackHistory).toHaveBeenCalledWith({ __fake: true }, 'u1', {
       draft,
       bankEntries: bank,
+      batchId: 'b7',
       tree: { yearId: 'y1', courseId: 'co1', periodId: 'p4' },
       gradingPeriod: 'Q1',
       label: 'Unit 3',
@@ -54,6 +56,7 @@ describe('makeHistoryWriter', () => {
       gradingPeriod: 'Q1',
       label: '',
       bankEntries: bank,
+      batchId: 'b7',
       now: () => 1,
       writeFeedbackHistory,
       onError,

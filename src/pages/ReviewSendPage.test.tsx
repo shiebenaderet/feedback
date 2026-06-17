@@ -61,6 +61,26 @@ describe('ReviewSendPage (history + grading period)', () => {
     expect(deps.listBankEntries).toHaveBeenCalledWith({ __fake: true }, 'u1');
   });
 
+  it('an ALREADY-SENT batch renders read-only — no Send all, no re-send', async () => {
+    const deps = {
+      ...makeDeps(),
+      getBatch: vi.fn(async () => ({
+        id: 'b1',
+        periodId: 'p4',
+        courseId: 'co1',
+        yearId: 'y1',
+        sharedHeader: 'Hi',
+        status: 'sent' as const,
+        gradingPeriod: 'Q1' as const,
+        label: '',
+      })),
+    };
+    renderAt(deps as unknown as ReturnType<typeof makeDeps>);
+    expect(await screen.findByText(/already been sent/i)).toBeInTheDocument();
+    // The live sender is not rendered, so the batch cannot be re-sent.
+    expect(screen.queryByRole('button', { name: /send all/i })).toBeNull();
+  });
+
   it('defaults the grading-period chooser from the batch and persists changes', async () => {
     const deps = makeDeps();
     renderAt(deps);

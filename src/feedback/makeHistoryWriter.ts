@@ -16,6 +16,8 @@ export interface MakeHistoryWriterArgs {
   gradingPeriod: GradingPeriod;
   label: string;
   bankEntries: BankEntry[];
+  /** The round's batch id — makes each history write idempotent per student. */
+  batchId: string;
   /** Clock seam; defaults to Date.now. */
   now?: () => number;
   /** Injected for tests; defaults to the real data fn. */
@@ -37,6 +39,7 @@ export function makeHistoryWriter({
   gradingPeriod,
   label,
   bankEntries,
+  batchId,
   now = Date.now,
   writeFeedbackHistory = defaultWriteFeedbackHistory,
   onError,
@@ -50,6 +53,7 @@ export function makeHistoryWriter({
         gradingPeriod,
         label,
         sentAt: now(),
+        batchId,
       });
     } catch (err) {
       onError?.(err, draft);
