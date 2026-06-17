@@ -9,35 +9,77 @@ const periodId = 'p1';
 const studentsPath =
   `teachers/${uid}/years/${yearId}/courses/${courseId}/periods/${periodId}/students`;
 
-describe('saveStudents (nested period path)', () => {
-  it('writes each student under the period students subcollection', async () => {
+function makeWriteDeps() {
+  const docs: Array<{ path: string; id: string; data: unknown; merge: unknown }> = [];
+  return {
+    docs,
+    doc: vi.fn((_db: unknown, path: string, id: string) => ({ __path: path, __id: id })),
+    setDoc: vi.fn(async (ref: any, data: unknown, opts: unknown) => {
+      docs.push({ path: ref.__path, id: ref.__id, data, merge: opts });
+    }),
+  };
+}
+
+describe('saveStudents (upsert by email)', () => {
+  it('writes each student at a DETERMINISTIC id derived from their email (merge)', async () => {
     const db = { __fake: true };
-    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
-    const addDoc = vi.fn(async (_ref: unknown, _data: unknown) => ({ id: 'generated' }));
+    const deps = makeWriteDeps();
 
     const students: Student[] = [
-      { id: 's1', name: 'Ada Lovelace', email: 'ada@example.com', period: '3' },
+      { id: 's1', name: 'Ada Lovelace', email: 'Ada@Example.com', period: '3' },
       { id: 's2', name: 'Alan Turing', email: 'alan@example.com', period: '3' },
     ];
 
-    const count = await saveStudents(
+    const count = await saveStudents(db as any, uid, yearId, courseId, periodId, students, deps as any);
+
+    expect(count).toBe(2);
+    expect(deps.docs).toHaveLength(2);
+    for (const d of deps.docs) {
+      expect(d.path).toBe(studentsPath);
+      expect(d.merge).toEqual({ merge: true });
+    }
+    // Email is normalized (lowercased/trimmed) for the id, so casing can't dupe.
+    expect(deps.docs[0].id).toBe(deps.docs[0].id.toLowerCase());
+    expect(deps.docs[0].data).toEqual({
+      name: 'Ada Lovelace',
+      email: 'Ada@Example.com',
+      period: '3',
+    });
+  });
+
+  it('is idempotent: re-saving the SAME student lands on the SAME doc id (no duplicate)', async () => {
+    const db = { __fake: true };
+    const deps = makeWriteDeps();
+    const ada: Student[] = [{ id: 's1', name: 'Ada', email: 'ada@example.com', period: '3' }];
+
+    await saveStudents(db as any, uid, yearId, courseId, periodId, ada, deps as any);
+    // Re-import the same roster (same email, different casing/whitespace).
+    await saveStudents(
       db as any,
       uid,
       yearId,
       courseId,
       periodId,
-      students,
-      { collection, addDoc } as any,
+      [{ id: 'x', name: 'Ada L.', email: '  ADA@example.com ', period: '3' }],
+      deps as any,
     );
 
-    expect(count).toBe(2);
-    expect(collection).toHaveBeenCalledWith(db, studentsPath);
-    expect(addDoc).toHaveBeenCalledTimes(2);
-    expect(addDoc.mock.calls[0][1]).toEqual({
-      name: 'Ada Lovelace',
-      email: 'ada@example.com',
-      period: '3',
-    });
+    expect(deps.docs[0].id).toBe(deps.docs[1].id);
+  });
+
+  it('skips a student with no usable email rather than minting an unkeyed dupe', async () => {
+    const db = { __fake: true };
+    const deps = makeWriteDeps();
+    await saveStudents(
+      db as any,
+      uid,
+      yearId,
+      courseId,
+      periodId,
+      [{ id: 's1', name: 'No Email', email: '', period: '3' }],
+      deps as any,
+    );
+    expect(deps.docs).toHaveLength(0);
   });
 });
 
