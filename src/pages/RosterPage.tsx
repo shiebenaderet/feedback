@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { listStudents, saveStudents, updateStudent, deleteStudent } from '../data/students';
 import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { downloadRosterTemplate } from '../roster/downloadRosterTemplate';
 import { UploadRosterPanel } from '../roster/UploadRosterPanel';
 import { AddStudentForm, type NewStudentInput } from '../roster/AddStudentForm';
@@ -32,13 +33,6 @@ export interface RosterPageDeps {
   updateStudent: typeof updateStudent;
   deleteStudent: typeof deleteStudent;
   downloadRosterTemplate: typeof downloadRosterTemplate;
-}
-
-/** The current academic-year label, e.g. "2025–26" (rolls over in August). */
-function currentSchoolYearLabel(): string {
-  const now = new Date();
-  const startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  return `${startYear}–${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
 /** Map persisted Student[] to the RosterStudent[] shape the table renders. */

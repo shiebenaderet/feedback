@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import type { Firestore } from 'firebase/firestore';
 import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { listCourses } from '../data/courses';
 import { listPeriods } from '../data/periods';
 import { rosterSize } from '../data/students';
@@ -16,14 +17,6 @@ import { tokens, panelStyle } from '../ui/theme';
 
 /** Default grading period for Home's progress when none is chosen (last in list = EOY). */
 const DEFAULT_GRADING_PERIOD = GRADING_PERIODS[GRADING_PERIODS.length - 1];
-
-/** The current academic-year label, e.g. "2025–26" (rolls over in August). */
-function currentSchoolYearLabel(): string {
-  const now = new Date();
-  const startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  const endTwo = String((startYear + 1) % 100).padStart(2, '0');
-  return `${startYear}–${endTwo}`;
-}
 
 /** A period row already resolved with its progress count, ready to render. */
 interface PeriodRow extends Period {
@@ -141,25 +134,54 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
           {cards.map(({ course, periods }) => (
             <section key={course.id} style={panelStyle()} aria-label={course.name}>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>{course.name}</h2>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: tokens.space(1) }}>
-                {periods.map((p) => (
-                  <li
-                    key={p.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: tokens.space(1) }}
-                  >
-                    <span style={{ flex: 1 }}>{p.label}</span>
-                    <span style={{ color: tokens.color.muted, fontVariantNumeric: 'tabular-nums' }}>
-                      {p.done} / {p.total}
-                    </span>
-                    <Link to={`/course/${course.id}/period/${p.id}/compose`} style={{ color: tokens.color.teal }}>
-                      Write feedback
-                    </Link>
-                    <Link to={`/course/${course.id}/period/${p.id}/trends`} style={{ color: tokens.color.teal }}>
-                      Trends
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+
+              {periods.length === 0 ? (
+                <p style={{ color: tokens.color.muted, fontSize: 14 }}>
+                  No periods yet.{' '}
+                  <Link to="/setup" style={{ color: tokens.color.teal }}>
+                    Add periods
+                  </Link>
+                </p>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: tokens.space(1.5) }}>
+                  {periods.map((p) => (
+                    <li key={p.id} style={{ display: 'grid', gap: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: tokens.space(1) }}>
+                        <span style={{ flex: 1, fontWeight: 600 }}>{p.label}</span>
+                        <span
+                          style={{ color: tokens.color.muted, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {p.done} / {p.total}
+                        </span>
+                      </div>
+                      {p.total === 0 ? (
+                        // Empty roster: adding students is the only sensible next step.
+                        <Link
+                          to={`/course/${course.id}/period/${p.id}/roster`}
+                          style={{ color: tokens.color.teal, fontWeight: 600 }}
+                        >
+                          + Add students
+                        </Link>
+                      ) : (
+                        <div style={{ display: 'flex', gap: tokens.space(1.5), fontSize: 14 }}>
+                          <Link
+                            to={`/course/${course.id}/period/${p.id}/roster`}
+                            style={{ color: tokens.color.teal }}
+                          >
+                            Roster
+                          </Link>
+                          <Link
+                            to={`/course/${course.id}/period/${p.id}/compose`}
+                            style={{ color: tokens.color.teal }}
+                          >
+                            Write feedback
+                          </Link>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
 

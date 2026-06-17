@@ -5,6 +5,7 @@ import { db } from '../firebase/config';
 import { createBatch, updateBatch } from '../firebase/batches';
 import { saveMessageDraft } from '../firebase/messages';
 import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
 import { rosterProgress } from '../compose/rosterProgress';
@@ -27,7 +28,8 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const { user } = useAuth();
   const uid = deps?.uid ?? user?.uid ?? '';
   const api = {
-    resolveYearId: deps?.resolveYearId ?? ((d, u) => getOrCreateCurrentYear(d, u, '')),
+    resolveYearId:
+      deps?.resolveYearId ?? ((d, u) => getOrCreateCurrentYear(d, u, currentSchoolYearLabel())),
     loadComposeData: deps?.loadComposeData ?? loadComposeData,
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
