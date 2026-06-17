@@ -62,7 +62,7 @@ describe('protected compose/review routes', () => {
   it('renders ComposePage at /compose/:courseId/:periodId when signed in', () => {
     useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
     render(
-      <MemoryRouter initialEntries={['/compose/c1/p1']}>
+      <MemoryRouter initialEntries={['/course/c1/period/p1/compose']}>
         <AppRoutes />
       </MemoryRouter>,
     );

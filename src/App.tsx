@@ -29,17 +29,16 @@ export function AppRoutes() {
         }
       />
       <Route
-        path="/roster"
+        path="/course/:courseId/period/:periodId/roster"
         element={
           <RequireAuth>
             <RosterPage />
           </RequireAuth>
         }
       />
-      {/* Phase 4 re-points ComposePage to the year/course/period tree; the route
-          carries courseId + periodId now so HomePage's links resolve. */}
+      {/* Phase 4 re-points ComposePage to the year/course/period tree. */}
       <Route
-        path="/compose/:courseId/:periodId"
+        path="/course/:courseId/period/:periodId/compose"
         element={
           <RequireAuth>
             <ComposePage />

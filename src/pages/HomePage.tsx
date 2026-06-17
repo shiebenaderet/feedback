@@ -151,10 +151,10 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
                     <span style={{ color: tokens.color.muted, fontVariantNumeric: 'tabular-nums' }}>
                       {p.done} / {p.total}
                     </span>
-                    <Link to={`/compose/${course.id}/${p.id}`} style={{ color: tokens.color.teal }}>
+                    <Link to={`/course/${course.id}/period/${p.id}/compose`} style={{ color: tokens.color.teal }}>
                       Write feedback
                     </Link>
-                    <Link to={`/trends/${course.id}/${p.id}`} style={{ color: tokens.color.teal }}>
+                    <Link to={`/course/${course.id}/period/${p.id}/trends`} style={{ color: tokens.color.teal }}>
                       Trends
                     </Link>
                   </li>

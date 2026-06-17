@@ -68,8 +68,8 @@ describe('HomePage', () => {
     );
     const write = await screen.findByRole('link', { name: /write feedback/i });
     const trends = await screen.findByRole('link', { name: /trends/i });
-    expect(write).toHaveAttribute('href', '/compose/course-bio/p1');
-    expect(trends).toHaveAttribute('href', '/trends/course-bio/p1');
+    expect(write).toHaveAttribute('href', '/course/course-bio/period/p1/compose');
+    expect(trends).toHaveAttribute('href', '/course/course-bio/period/p1/trends');
   });
 
   it('shows an + Add course card linking to /setup and a Bank entry point', async () => {
