@@ -8,11 +8,14 @@ import { getOrCreateCurrentYear } from '../data/years';
 import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
+import { ComposeHistoryPanel } from '../compose/ComposeHistoryPanel';
 import { NavBar } from '../components/NavBar';
+import { Breadcrumbs } from '../components/Breadcrumbs';
+import { listStudentHistory } from '../data/listStudentHistory';
 import { rosterProgress } from '../compose/rosterProgress';
 import { nextStudentIndex } from '../compose/nextStudentIndex';
-import type { ClassMeta, MessageDraft } from '../types';
-import { tokens } from '../ui/theme';
+import type { ClassMeta, FeedbackHistoryEntry, MessageDraft } from '../types';
+import { tokens, progressTrackStyle, progressFillStyle } from '../ui/theme';
 
 export interface ComposePageDeps {
   uid: string;
@@ -22,6 +25,12 @@ export interface ComposePageDeps {
   createBatch: typeof createBatch;
   updateBatch: typeof updateBatch;
   saveMessageDraft: typeof saveMessageDraft;
+  /** Loads the current student's prior feedback for the inline history panel. */
+  listStudentHistory: (
+    db: unknown,
+    uid: string,
+    loc: { yearId: string; courseId: string; periodId: string; studentId: string },
+  ) => Promise<FeedbackHistoryEntry[]>;
 }
 
 export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
@@ -35,6 +44,8 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
     saveMessageDraft: deps?.saveMessageDraft ?? saveMessageDraft,
+    listStudentHistory:
+      deps?.listStudentHistory ?? (listStudentHistory as ComposePageDeps['listStudentHistory']),
   };
 
   const [data, setData] = useState<ComposeData | null>(null);
@@ -42,6 +53,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const [sharedHeader, setSharedHeader] = useState('');
   const [index, setIndex] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, MessageDraft>>({});
+  const [studentHistory, setStudentHistory] = useState<FeedbackHistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   // createBatch must run EXACTLY once; this guard survives StrictMode double-invoke.
@@ -80,6 +92,31 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, courseId, periodId]);
+
+  // Load the CURRENT student's prior feedback for the inline history panel.
+  // Best-effort: an empty/failed read just shows the empty state, never blocks
+  // composing (the history collection-group query may need an index).
+  const currentStudentId = data?.students[index]?.id;
+  useEffect(() => {
+    if (!uid || !data || !currentStudentId) {
+      setStudentHistory([]);
+      return;
+    }
+    let alive = true;
+    api
+      .listStudentHistory(db, uid, {
+        yearId: data.yearId,
+        courseId: data.courseId,
+        periodId,
+        studentId: currentStudentId,
+      })
+      .then((entries) => alive && setStudentHistory(entries))
+      .catch(() => alive && setStudentHistory([]));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, currentStudentId, periodId]);
 
   // Persist the shared header to the batch (debounced) so it isn't lost at review.
   const onHeaderChange = useCallback(
@@ -130,10 +167,18 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   // ComposeScreen's classMeta is the slot-fill context; the period stands in for it.
   const classMeta: ClassMeta = { id: data.period.id, name: data.period.label };
 
+  const pct = progress.total > 0 ? Math.round((progress.doneCount / progress.total) * 100) : 0;
+
   return (
     <>
       <NavBar />
-      <main>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/home' },
+          { label: data.period.label },
+        ]}
+      />
+      <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
         <h1>Write feedback · {data.period.label}</h1>
 
       <label htmlFor="shared-header">Shared header (top of every message)</label>
@@ -148,6 +193,16 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           <p data-testid="roster-progress">
             {progress.doneCount} / {progress.total}
           </p>
+          <div
+            role="progressbar"
+            aria-label="Roster progress"
+            aria-valuenow={progress.doneCount}
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            style={{ ...progressTrackStyle(), marginBottom: tokens.space(1) }}
+          >
+            <div style={progressFillStyle(pct)} />
+          </div>
           <ul>
             {data.students.map((s, i) => (
               <li key={s.id}>
@@ -165,14 +220,17 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         </nav>
 
         {student && (
-          <ComposeScreen
-            key={student.id}
-            batchId={batchId}
-            student={student}
-            classMeta={classMeta}
-            entries={data.entries}
-            onAutoSave={onAutoSave}
-          />
+          <div style={{ flex: 1, display: 'grid', gap: tokens.space(2) }}>
+            <ComposeScreen
+              key={student.id}
+              batchId={batchId}
+              student={student}
+              classMeta={classMeta}
+              entries={data.entries}
+              onAutoSave={onAutoSave}
+            />
+            <ComposeHistoryPanel studentName={student.name} entries={studentHistory} />
+          </div>
         )}
       </div>
 
