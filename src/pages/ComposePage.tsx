@@ -15,7 +15,7 @@ import { listStudentHistory } from '../data/listStudentHistory';
 import { rosterProgress } from '../compose/rosterProgress';
 import { nextStudentIndex } from '../compose/nextStudentIndex';
 import type { ClassMeta, FeedbackHistoryEntry, MessageDraft } from '../types';
-import { tokens, progressTrackStyle, progressFillStyle } from '../ui/theme';
+import { tokens, cardStyle, tealButtonStyle, progressTrackStyle, progressFillStyle } from '../ui/theme';
 
 export interface ComposePageDeps {
   uid: string;
@@ -181,48 +181,85 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         ]}
       />
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
-        <h1>Write feedback · {data.period.label}</h1>
+        <h1 style={{ marginTop: 0 }}>Write feedback · {data.period.label}</h1>
 
-      <label htmlFor="shared-header">Shared header (top of every message)</label>
-      <textarea
-        id="shared-header"
-        value={sharedHeader}
-        onChange={(e) => onHeaderChange(e.target.value)}
-      />
+        <div style={{ display: 'grid', gap: 6, marginBottom: tokens.space(3), maxWidth: 640 }}>
+          <label htmlFor="shared-header" style={{ color: tokens.color.muted, fontSize: 13 }}>
+            Shared header (top of every message)
+          </label>
+          <textarea
+            id="shared-header"
+            value={sharedHeader}
+            onChange={(e) => onHeaderChange(e.target.value)}
+            rows={2}
+            placeholder="e.g. End-of-quarter feedback — Period 1"
+            style={{ width: '100%', resize: 'vertical' }}
+          />
+        </div>
 
-      <div style={{ display: 'flex', gap: 16 }}>
-        <nav aria-label="Roster" style={{ flex: '0 0 200px' }}>
-          <p data-testid="roster-progress">
-            {progress.doneCount} / {progress.total}
-          </p>
-          <div
-            role="progressbar"
-            aria-label="Roster progress"
-            aria-valuenow={progress.doneCount}
-            aria-valuemin={0}
-            aria-valuemax={progress.total}
-            style={{ ...progressTrackStyle(), marginBottom: tokens.space(1) }}
+        <div style={{ display: 'flex', gap: tokens.space(2), alignItems: 'flex-start' }}>
+          <nav
+            aria-label="Roster"
+            style={{
+              ...cardStyle(),
+              flex: '0 0 220px',
+              padding: tokens.space(2),
+              maxHeight: 640,
+              overflowY: 'auto',
+            }}
           >
-            <div style={progressFillStyle(pct)} />
-          </div>
-          <ul>
-            {data.students.map((s, i) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  aria-pressed={i === index}
-                  onClick={() => setIndex(i)}
-                >
-                  {s.name}
-                  {progress.doneIds.has(s.id) ? ' ✓' : ''}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+            <p
+              data-testid="roster-progress"
+              style={{ margin: 0, color: tokens.color.muted, fontSize: 13 }}
+            >
+              {progress.doneCount} / {progress.total} done
+            </p>
+            <div
+              role="progressbar"
+              aria-label="Roster progress"
+              aria-valuenow={progress.doneCount}
+              aria-valuemin={0}
+              aria-valuemax={progress.total}
+              style={{ ...progressTrackStyle(), margin: `${tokens.space(1)}px 0 ${tokens.space(2)}px` }}
+            >
+              <div style={progressFillStyle(pct)} />
+            </div>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2 }}>
+              {data.students.map((s, i) => {
+                const active = i === index;
+                const done = progress.doneIds.has(s.id);
+                return (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setIndex(i)}
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        background: active ? 'rgba(95,184,168,0.12)' : 'transparent',
+                        color: active ? tokens.color.teal : tokens.color.text,
+                        border: `1px solid ${active ? tokens.color.teal : 'transparent'}`,
+                        borderRadius: tokens.radius.sm,
+                        padding: '6px 8px',
+                        fontSize: 14,
+                      }}
+                    >
+                      <span>{s.name}</span>
+                      {done && <span style={{ color: tokens.color.teal }}>✓</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
         {student && (
-          <div style={{ flex: 1, display: 'grid', gap: tokens.space(2) }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: tokens.space(2) }}>
             <ComposeScreen
               key={student.id}
               batchId={batchId}
@@ -234,17 +271,28 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
             <ComposeHistoryPanel studentName={student.name} entries={studentHistory} />
           </div>
         )}
-      </div>
+        </div>
 
-      <button
-        type="button"
-        onClick={() => setIndex((i) => nextStudentIndex(i, data.students.length))}
-      >
-        Save & next
-      </button>
-
-      {/* Compose → Review handoff. */}
-      <Link to={`/review/${batchId}`}>Review & send →</Link>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: tokens.space(2),
+            marginTop: tokens.space(3),
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setIndex((i) => nextStudentIndex(i, data.students.length))}
+            style={{ ...tealButtonStyle(), padding: '8px 16px' }}
+          >
+            Save & next
+          </button>
+          {/* Compose → Review handoff. */}
+          <Link to={`/review/${batchId}`} style={{ color: tokens.color.teal, fontWeight: 600 }}>
+            Review & send →
+          </Link>
+        </div>
       </main>
     </>
   );

@@ -4,7 +4,8 @@ import { db } from '../firebase/config';
 import { NavBar } from '../components/NavBar';
 import { BankList } from '../bank/BankList';
 import { BankEntryForm } from '../bank/BankEntryForm';
-import { listBankEntries, addBankEntry } from '../bank/bankRepo';
+import { addBankEntry } from '../bank/bankRepo';
+import { ensureSeedBank } from '../bank/ensureSeedBank';
 import type { BankEntry, BankEntryInput } from '../bank/types';
 import { tokens } from '../ui/theme';
 
@@ -26,7 +27,8 @@ export function BankPage({ deps }: { deps?: Partial<BankPageDeps> }) {
   const { user } = useAuth();
   const uid = deps?.uid ?? user?.uid ?? '';
   const api = {
-    listBankEntries: deps?.listBankEntries ?? listBankEntries,
+    listBankEntries:
+      deps?.listBankEntries ?? (ensureSeedBank as BankPageDeps['listBankEntries']),
     addBankEntry: deps?.addBankEntry ?? addBankEntry,
   };
 

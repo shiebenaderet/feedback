@@ -3,7 +3,7 @@ import type { BankEntry, Period } from '../types';
 import type { RosterStudent } from '../roster/RosterTable';
 import { listPeriods } from '../data/periods';
 import { listStudents } from '../data/students';
-import { listBankEntries } from '../bank/bankRepo';
+import { ensureSeedBank } from '../bank/ensureSeedBank';
 
 export interface ComposeTarget {
   yearId: string;
@@ -30,7 +30,9 @@ export interface LoadComposeDeps {
 const defaultDeps: LoadComposeDeps = {
   listPeriods,
   listStudents,
-  listBankEntries: listBankEntries as LoadComposeDeps['listBankEntries'],
+  // Seeds the curated comment bank on the very first (empty) read so the compose
+  // screen always has comments to pick from.
+  listBankEntries: ensureSeedBank as LoadComposeDeps['listBankEntries'],
 };
 
 /**

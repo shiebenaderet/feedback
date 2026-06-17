@@ -4,6 +4,7 @@ import { useComposeMessage } from './useComposeMessage';
 import { FillSlotInputs } from './FillSlotInputs';
 import { deriveTypeOptions, filterEntriesByType } from './bankFilter';
 import { useState } from 'react';
+import { tokens, cardStyle, chipStyle } from '../ui/theme';
 
 export interface ComposeScreenProps {
   batchId: string;
@@ -65,51 +66,128 @@ export function ComposeScreen({
     debounceMs,
   ]);
 
+  const filterChip = (active: boolean) => ({
+    ...chipStyle(active),
+    cursor: 'pointer',
+    color: active ? tokens.color.teal : tokens.color.subtle,
+    textTransform: 'capitalize' as const,
+  });
+
   return (
-    <div className="compose-screen" style={{ display: 'flex', gap: 14 }}>
-      {/* MIDDLE: message builder */}
-      <div className="compose-builder" style={{ flex: 1 }}>
-        <div className="label">{student.name}'s message</div>
-        <pre data-testid="final-text">{compose.finalText}</pre>
-        <FillSlotInputs
-          selectedEntries={compose.selectedEntries}
-          slotValues={compose.slotValues}
-          setSlotValue={compose.setSlotValue}
-        />
+    <div
+      className="compose-screen"
+      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: tokens.space(2) }}
+    >
+      {/* MIDDLE: the message being composed */}
+      <div className="compose-builder" style={{ ...cardStyle(), minWidth: 0 }}>
+        <div
+          className="label"
+          style={{ color: tokens.color.muted, fontSize: 13, marginBottom: tokens.space(1) }}
+        >
+          {student.name}'s message
+        </div>
+        <pre
+          data-testid="final-text"
+          style={{
+            margin: 0,
+            minHeight: 120,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            fontFamily: tokens.font,
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: compose.finalText ? tokens.color.text : tokens.color.muted,
+            background: tokens.color.panelAlt,
+            border: `1px solid ${tokens.color.border}`,
+            borderRadius: tokens.radius.md,
+            padding: tokens.space(2),
+          }}
+        >
+          {compose.finalText || 'Pick comments from the bank →'}
+        </pre>
+        <div style={{ marginTop: tokens.space(2) }}>
+          <FillSlotInputs
+            selectedEntries={compose.selectedEntries}
+            slotValues={compose.slotValues}
+            setSlotValue={compose.setSlotValue}
+          />
+        </div>
       </div>
 
       {/* RIGHT: bank picker */}
-      <div className="compose-bank" style={{ flex: '0 0 230px' }}>
-        <div className="label">Bank · filter</div>
-        <div className="bank-filter-chips">
+      <div className="compose-bank" style={{ ...cardStyle(), minWidth: 0 }}>
+        <div
+          className="label"
+          style={{ color: tokens.color.muted, fontSize: 13, marginBottom: tokens.space(1) }}
+        >
+          Bank · filter
+        </div>
+        <div
+          className="bank-filter-chips"
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: tokens.space(2) }}
+        >
           <button
+            type="button"
             aria-pressed={typeFilter === null}
             onClick={() => setTypeFilter(null)}
+            style={filterChip(typeFilter === null)}
           >
             all
           </button>
           {typeOptions.map((t) => (
             <button
               key={t}
+              type="button"
               aria-pressed={typeFilter === t}
               onClick={() => setTypeFilter((cur) => (cur === t ? null : t))}
+              style={filterChip(typeFilter === t)}
             >
               {t}
             </button>
           ))}
         </div>
-        <ul className="bank-entries">
-          {visibleEntries.map((e) => (
-            <li key={e.id}>
-              <button
-                data-testid={`add-${e.id}`}
-                onClick={() => compose.addEntry(e.id)}
-                disabled={compose.usedEntries.includes(e.id)}
-              >
-                + {e.templateText.slice(0, 24)}
-              </button>
-            </li>
-          ))}
+        <ul
+          className="bank-entries"
+          style={{
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+            display: 'grid',
+            gap: tokens.space(1),
+            maxHeight: 460,
+            overflowY: 'auto',
+          }}
+        >
+          {visibleEntries.map((e) => {
+            const used = compose.usedEntries.includes(e.id);
+            return (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  data-testid={`add-${e.id}`}
+                  onClick={() => compose.addEntry(e.id)}
+                  disabled={used}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    cursor: used ? 'default' : 'pointer',
+                    background: used ? tokens.color.panel : tokens.color.panelAlt,
+                    color: used ? tokens.color.muted : tokens.color.text,
+                    border: `1px solid ${used ? tokens.color.teal : tokens.color.border}`,
+                    borderRadius: tokens.radius.md,
+                    padding: tokens.space(1.5),
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    opacity: used ? 0.6 : 1,
+                  }}
+                >
+                  {used ? '✓ ' : '+ '}
+                  {e.templateText}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
