@@ -13,7 +13,7 @@ import { periodFeedbackProgress } from '../feedback/periodFeedbackProgress';
 import { GRADING_PERIODS } from '../feedback/taxonomy';
 import { NavBar } from '../components/NavBar';
 import type { Course, Period, FeedbackHistoryEntry } from '../types';
-import { tokens, panelStyle } from '../ui/theme';
+import { tokens, panelStyle, cardStyle, progressTrackStyle, progressFillStyle } from '../ui/theme';
 
 /** Default grading period for Home's progress when none is chosen (last in list = EOY). */
 const DEFAULT_GRADING_PERIOD = GRADING_PERIODS[GRADING_PERIODS.length - 1];
@@ -140,7 +140,7 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
           }}
         >
           {cards.map(({ course, periods }) => (
-            <section key={course.id} style={panelStyle()} aria-label={course.name}>
+            <section key={course.id} style={cardStyle()} aria-label={course.name}>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>{course.name}</h2>
 
               {periods.length === 0 ? (
@@ -162,6 +162,22 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
                           {p.done} / {p.total}
                         </span>
                       </div>
+                      {p.total > 0 && (
+                        <div
+                          role="progressbar"
+                          aria-label={`${p.label} feedback progress`}
+                          aria-valuenow={p.done}
+                          aria-valuemin={0}
+                          aria-valuemax={p.total}
+                          style={progressTrackStyle()}
+                        >
+                          <div
+                            style={progressFillStyle(
+                              p.total > 0 ? Math.round((p.done / p.total) * 100) : 0,
+                            )}
+                          />
+                        </div>
+                      )}
                       {p.total === 0 ? (
                         // Empty roster: adding students is the only sensible next step.
                         <Link

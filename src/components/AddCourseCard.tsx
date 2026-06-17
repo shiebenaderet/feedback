@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { tokens, panelStyle, tealButtonStyle } from '../ui/theme';
+import { tokens, cardStyle, tealButtonStyle } from '../ui/theme';
 
 export interface NewPeriodInput {
   label: string;
@@ -70,7 +70,7 @@ export function AddCourseCard({ onCreate }: AddCourseCardProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ ...panelStyle(), maxWidth: 520, display: 'grid', gap: tokens.space(2) }}>
+    <form onSubmit={handleSubmit} style={{ ...cardStyle(), maxWidth: 520, display: 'grid', gap: tokens.space(2) }}>
       <h2 style={{ margin: 0, fontSize: 18 }}>Add a course</h2>
 
       <label htmlFor="course-name" style={{ display: 'grid', gap: 4 }}>

@@ -7,6 +7,8 @@ import { listStudents, saveStudents, updateStudent, deleteStudent } from '../dat
 import { getOrCreateCurrentYear } from '../data/years';
 import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { downloadRosterTemplate } from '../roster/downloadRosterTemplate';
+import { NavBar } from '../components/NavBar';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { UploadRosterPanel } from '../roster/UploadRosterPanel';
 import { AddStudentForm, type NewStudentInput } from '../roster/AddStudentForm';
 import { PasteRosterPanel } from '../roster/PasteRosterPanel';
@@ -15,7 +17,7 @@ import { RosterTable, type RosterStudent } from '../roster/RosterTable';
 import type { StudentEditPatch } from '../roster/StudentRowActions';
 import { EMPTY_PARSE_RESULT, type ParseResult } from '../roster/types';
 import type { Student } from '../types';
-import { tokens, panelStyle } from '../ui/theme';
+import { tokens, cardStyle } from '../ui/theme';
 
 /**
  * The per-period Roster screen at /course/:courseId/period/:periodId/roster.
@@ -126,8 +128,16 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
   }
 
   return (
-    <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
-      <h1 style={{ color: tokens.color.text }}>Build the roster</h1>
+    <>
+      <NavBar />
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/home' },
+          { label: 'Roster' },
+        ]}
+      />
+      <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
+        <h1 style={{ color: tokens.color.text }}>Build the roster</h1>
       {error && (
         <p role="alert" style={{ color: tokens.color.danger }}>
           {error}
@@ -136,7 +146,7 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
 
       {!showPreview && (
         <div style={{ display: 'grid', gap: tokens.space(2) }}>
-          <section aria-label="Upload CSV" style={panelStyle()}>
+          <section aria-label="Upload CSV" style={cardStyle()}>
             <h2 style={{ color: tokens.color.text }}>Upload CSV</h2>
             <UploadRosterPanel
               onParsed={handleParsed}
@@ -144,17 +154,17 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
             />
           </section>
 
-          <section aria-label="Type manually" style={panelStyle()}>
+          <section aria-label="Type manually" style={cardStyle()}>
             <h2 style={{ color: tokens.color.text }}>Type manually</h2>
             <AddStudentForm onAdd={handleAddManual} />
           </section>
 
-          <section aria-label="Paste a list" style={panelStyle()}>
+          <section aria-label="Paste a list" style={cardStyle()}>
             <h2 style={{ color: tokens.color.text }}>Paste a list</h2>
             <PasteRosterPanel onParsed={handleParsed} />
           </section>
 
-          <section aria-label="Current roster" style={panelStyle()}>
+          <section aria-label="Current roster" style={cardStyle()}>
             <h2 style={{ color: tokens.color.text }}>Current roster</h2>
             <RosterTable
               students={students}
@@ -177,6 +187,7 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
           onCancel={() => setShowPreview(false)}
         />
       )}
-    </main>
+      </main>
+    </>
   );
 }

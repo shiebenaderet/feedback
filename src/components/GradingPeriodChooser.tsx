@@ -1,5 +1,5 @@
 import { GRADING_PERIODS, type GradingPeriod } from '../feedback/taxonomy';
-import { tokens } from '../ui/theme';
+import { tokens, chipStyle } from '../ui/theme';
 
 export interface GradingPeriodValue {
   gradingPeriod: GradingPeriod;
@@ -13,10 +13,10 @@ export interface GradingPeriodChooserProps {
 }
 
 /**
- * Pre-send chooser: which grading period this round belongs to (fixed
- * GRADING_PERIODS from the taxonomy) plus an optional free-text label
- * ('Unit 3 reflections'). The chosen value is stamped on the batch and on
- * every feedbackHistory entry written in this round.
+ * Pre-send chooser: which grading period this round belongs to (the fixed
+ * GRADING_PERIODS from the taxonomy, shown as selectable chips) plus an optional
+ * free-text label ('Unit 3 reflections'). The chosen value is stamped on the
+ * batch and on every feedbackHistory entry written in this round.
  */
 export function GradingPeriodChooser({
   gradingPeriod,
@@ -30,28 +30,40 @@ export function GradingPeriodChooser({
         borderRadius: tokens.radius.md,
         padding: tokens.space(2),
         display: 'flex',
-        gap: tokens.space(2),
-        alignItems: 'flex-end',
+        flexDirection: 'column',
+        gap: tokens.space(1.5),
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <label htmlFor="grading-period">Grading period</label>
-        <select
-          id="grading-period"
-          value={gradingPeriod}
-          onChange={(e) =>
-            onChange({ gradingPeriod: e.target.value as GradingPeriod, label })
-          }
-        >
-          {GRADING_PERIODS.map((gp) => (
-            <option key={gp} value={gp}>
+      <legend style={{ color: tokens.color.muted, fontSize: 14, padding: '0 6px' }}>
+        Grading period
+      </legend>
+
+      <div
+        role="group"
+        aria-label="Grading period"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.space(1) }}
+      >
+        {GRADING_PERIODS.map((gp) => {
+          const active = gp === gradingPeriod;
+          return (
+            <button
+              key={gp}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange({ gradingPeriod: gp, label })}
+              style={{
+                ...chipStyle(active),
+                cursor: 'pointer',
+                color: active ? tokens.color.teal : tokens.color.subtle,
+              }}
+            >
               {gp}
-            </option>
-          ))}
-        </select>
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <label htmlFor="grading-label">Label (optional)</label>
         <input
           id="grading-label"

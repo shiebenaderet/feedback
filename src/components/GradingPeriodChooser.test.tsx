@@ -4,7 +4,7 @@ import { GradingPeriodChooser } from './GradingPeriodChooser';
 import { GRADING_PERIODS } from '../feedback/taxonomy';
 
 describe('GradingPeriodChooser', () => {
-  it('renders one option per GRADING_PERIODS value', () => {
+  it('renders one chip button per GRADING_PERIODS value', () => {
     render(
       <GradingPeriodChooser
         gradingPeriod={GRADING_PERIODS[0]}
@@ -12,11 +12,15 @@ describe('GradingPeriodChooser', () => {
         onChange={vi.fn()}
       />,
     );
-    const select = screen.getByLabelText(/grading period/i) as HTMLSelectElement;
-    expect(select.options).toHaveLength(GRADING_PERIODS.length);
     for (const gp of GRADING_PERIODS) {
-      expect(screen.getByRole('option', { name: gp })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: gp })).toBeInTheDocument();
     }
+  });
+
+  it('marks the active grading period chip pressed', () => {
+    render(<GradingPeriodChooser gradingPeriod="Q2" label="" onChange={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Q2' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Q1' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('reports the chosen grading period, preserving the label', () => {
@@ -24,9 +28,7 @@ describe('GradingPeriodChooser', () => {
     render(
       <GradingPeriodChooser gradingPeriod="Q1" label="Unit 3" onChange={onChange} />,
     );
-    fireEvent.change(screen.getByLabelText(/grading period/i), {
-      target: { value: 'Q2' },
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Q2' }));
     expect(onChange).toHaveBeenCalledWith({ gradingPeriod: 'Q2', label: 'Unit 3' });
   });
 

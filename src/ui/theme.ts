@@ -86,3 +86,87 @@ export function kbdHintStyle(): CSSProperties {
     marginLeft: 8,
   };
 }
+
+/** A raised content card — the standard course/student/setup surface.
+ *  Slightly larger radius + padding than panelStyle for hero cards. */
+export function cardStyle(): CSSProperties {
+  return {
+    background: tokens.color.panel,
+    border: `1px solid ${tokens.color.border}`,
+    borderRadius: tokens.radius.lg,
+    color: tokens.color.text,
+    padding: tokens.space(3),
+  };
+}
+
+/** The rounded track behind a progress bar (matches SendStepper's bar). */
+export function progressTrackStyle(): CSSProperties {
+  return {
+    height: 4,
+    background: tokens.color.panelAlt,
+    borderRadius: 99,
+    overflow: 'hidden',
+  };
+}
+
+/** The teal fill of a progress bar. `pct` is clamped to 0..100. */
+export function progressFillStyle(pct: number): CSSProperties {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return {
+    width: `${clamped}%`,
+    height: '100%',
+    background: tokens.color.teal,
+  };
+}
+
+/** The breadcrumb row container (Year › Course › Period). */
+export function breadcrumbStyle(): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13,
+    color: tokens.color.muted,
+    fontFamily: tokens.font,
+  };
+}
+
+/** The "›" separator between crumbs — subtler than the crumbs themselves. */
+export function breadcrumbSepStyle(): CSSProperties {
+  return {
+    color: tokens.color.border,
+    fontSize: 13,
+    userSelect: 'none',
+  };
+}
+
+/** The persistent top navigation bar surface. */
+export function navBarStyle(): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.space(3),
+    background: tokens.color.panel,
+    borderBottom: `1px solid ${tokens.color.border}`,
+    padding: `${tokens.space(1.5)}px ${tokens.space(3)}px`,
+    fontFamily: tokens.font,
+  };
+}
+
+/** A period/section chip. Pill-shaped; active === current period → teal. */
+export function periodChipStyle(active: boolean): CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    background: active ? 'rgba(95,184,168,0.12)' : tokens.color.panelAlt,
+    color: active ? tokens.color.teal : tokens.color.subtle,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: active ? tokens.color.teal : tokens.color.border,
+    borderRadius: 999,
+    padding: '2px 9px',
+    fontSize: 12,
+    fontFamily: tokens.font,
+  };
+}

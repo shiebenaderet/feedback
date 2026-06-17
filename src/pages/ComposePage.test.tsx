@@ -70,7 +70,7 @@ describe('ComposePage (period route)', () => {
   it('shows the period name in the heading', async () => {
     const deps = makeDeps();
     renderAt(deps);
-    expect(await screen.findByText(/Period 4/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Period 4/ })).toBeInTheDocument();
   });
 
   it('auto-save persists a draft to the created batch', async () => {
