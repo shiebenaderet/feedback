@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { createBatch, updateBatch } from '../firebase/batches';
-import { saveMessageDraft } from '../firebase/messages';
+import { findDraftBatch } from '../firebase/findDraftBatch';
+import { saveMessageDraft, listMessages } from '../firebase/messages';
 import { getOrCreateCurrentYear } from '../data/years';
 import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { loadComposeData, type ComposeData } from './loadComposeData';
@@ -25,6 +26,10 @@ export interface ComposePageDeps {
   createBatch: typeof createBatch;
   updateBatch: typeof updateBatch;
   saveMessageDraft: typeof saveMessageDraft;
+  /** Resumes an existing open draft batch for the period (prevents lost work on reload). */
+  findDraftBatch: typeof findDraftBatch;
+  /** Loads the saved message drafts for a resumed batch. */
+  listMessages: typeof listMessages;
   /** Loads the current student's prior feedback for the inline history panel. */
   listStudentHistory: (
     db: unknown,
@@ -44,6 +49,8 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
     saveMessageDraft: deps?.saveMessageDraft ?? saveMessageDraft,
+    findDraftBatch: deps?.findDraftBatch ?? findDraftBatch,
+    listMessages: deps?.listMessages ?? listMessages,
     listStudentHistory:
       deps?.listStudentHistory ?? (listStudentHistory as ComposePageDeps['listStudentHistory']),
   };
@@ -69,22 +76,33 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
       if (!alive) return undefined;
       return api.loadComposeData(db, uid, { yearId, courseId, periodId });
     })()
-      .then((d) => {
+      .then(async (d) => {
         if (!d || !alive) return;
         setData(d);
-        if (!batchStarted.current) {
-          batchStarted.current = true;
-          api
-            .createBatch(db, uid, {
-              periodId,
-              courseId: d.courseId,
-              yearId: d.yearId,
-              sharedHeader: '',
-            })
-            .then((id) => {
-              if (alive) setBatchId(id);
-            });
+        if (batchStarted.current) return;
+        batchStarted.current = true;
+
+        // RESUME an existing open draft for this period so a page reload never
+        // loses work; only start a fresh batch when there's nothing to resume.
+        // Resilient: if the lookup fails (e.g. index still building), fall back
+        // to a fresh batch rather than blocking compose.
+        const existing = await api.findDraftBatch(db, uid, periodId).catch(() => null);
+        if (!alive) return;
+        if (existing) {
+          setBatchId(existing.id);
+          setSharedHeader(existing.sharedHeader ?? '');
+          const saved = await api.listMessages(db, uid, existing.id);
+          if (!alive) return;
+          setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
+          return;
         }
+        const id = await api.createBatch(db, uid, {
+          periodId,
+          courseId: d.courseId,
+          yearId: d.yearId,
+          sharedHeader: '',
+        });
+        if (alive) setBatchId(id);
       })
       .catch(() => alive && setError('Could not load this period.'));
     return () => {
@@ -198,15 +216,23 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           />
         </label>
 
-        <div style={{ display: 'flex', gap: tokens.space(2), alignItems: 'flex-start' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '230px minmax(0, 1fr)',
+            gap: tokens.space(2),
+            alignItems: 'start',
+          }}
+        >
           <nav
             aria-label="Roster"
             style={{
               ...cardStyle(),
-              flex: '0 0 220px',
               padding: tokens.space(2),
-              maxHeight: 640,
+              maxHeight: 'calc(100vh - 220px)',
               overflowY: 'auto',
+              position: 'sticky',
+              top: tokens.space(2),
             }}
           >
             <p
@@ -260,7 +286,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           </nav>
 
         {student && (
-          <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: tokens.space(2) }}>
+          <div style={{ minWidth: 0, display: 'grid', gap: tokens.space(2) }}>
             <ComposeScreen
               key={student.id}
               batchId={batchId}
@@ -268,6 +294,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
               classMeta={classMeta}
               entries={data.entries}
               onAutoSave={onAutoSave}
+              initialDraft={drafts[student.id]}
             />
             <ComposeHistoryPanel studentName={student.name} entries={studentHistory} />
           </div>

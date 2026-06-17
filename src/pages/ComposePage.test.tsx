@@ -25,16 +25,19 @@ function makeDeps() {
     createBatch: vi.fn(async () => 'batch-1'),
     updateBatch: vi.fn(async () => undefined),
     saveMessageDraft: vi.fn(async () => undefined),
+    // No existing draft by default → a fresh batch is created.
+    findDraftBatch: vi.fn(async () => null),
+    listMessages: vi.fn(async () => []),
   };
 }
 
-function renderAt(deps: ReturnType<typeof makeDeps>) {
+function renderAt(deps: Record<string, unknown>) {
   return render(
     <MemoryRouter initialEntries={['/course/co1/period/p4/compose']}>
       <Routes>
         <Route
           path="/course/:courseId/period/:periodId/compose"
-          element={<ComposePage deps={deps} />}
+          element={<ComposePage deps={deps as Parameters<typeof ComposePage>[0]['deps']} />}
         />
         <Route path="/review/:batchId" element={<div>review page</div>} />
       </Routes>
@@ -71,6 +74,36 @@ describe('ComposePage (period route)', () => {
     const deps = makeDeps();
     renderAt(deps);
     expect(await screen.findByRole('heading', { name: /Period 4/ })).toBeInTheDocument();
+  });
+
+  it('RESUMES an existing draft batch on reload instead of creating a new one', async () => {
+    const deps = {
+      ...makeDeps(),
+      findDraftBatch: vi.fn(async () => ({
+        id: 'existing-batch',
+        yearId: 'y1',
+        courseId: 'co1',
+        periodId: 'p4',
+        sharedHeader: 'Resumed header',
+        status: 'draft' as const,
+      })),
+      listMessages: vi.fn(async () => [
+        {
+          studentId: 's1',
+          name: 'Ana',
+          usedEntries: ['e1'],
+          slotValues: {},
+          finalText: 'Great work',
+          status: 'draft' as const,
+        },
+      ]),
+    };
+    renderAt(deps);
+    await screen.findByText("Ana's message");
+    // Reused the existing batch; did NOT create a new one (no orphaned drafts).
+    expect(deps.findDraftBatch).toHaveBeenCalledWith({ __fake: true }, 'u1', 'p4');
+    expect(deps.listMessages).toHaveBeenCalledWith({ __fake: true }, 'u1', 'existing-batch');
+    expect(deps.createBatch).not.toHaveBeenCalled();
   });
 
   it('auto-save persists a draft to the created batch', async () => {
