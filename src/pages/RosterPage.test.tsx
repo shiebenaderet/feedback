@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import type { ClassMeta } from '../types';
 import type { RosterStudent } from '../roster/RosterTable';
 
@@ -29,7 +30,11 @@ function makeDeps() {
 describe('RosterPage', () => {
   it('loads and lists the teacher’s classes', async () => {
     const deps = makeDeps();
-    render(<RosterPage deps={deps} />);
+    render(
+      <MemoryRouter>
+        <RosterPage deps={deps} />
+      </MemoryRouter>,
+    );
     // The class appears as a selectable button in the "choose a class" list.
     expect(
       await screen.findByRole('button', { name: 'Period 4 U.S. History' }),
@@ -39,7 +44,11 @@ describe('RosterPage', () => {
 
   it('selecting a class loads its students into the roster table', async () => {
     const deps = makeDeps();
-    render(<RosterPage deps={deps} />);
+    render(
+      <MemoryRouter>
+        <RosterPage deps={deps} />
+      </MemoryRouter>,
+    );
     // Click the class button (the one inside the select-a-class list).
     const classButton = await screen.findByRole('button', {
       name: 'Period 4 U.S. History',
@@ -53,7 +62,11 @@ describe('RosterPage', () => {
 
   it('creating a class calls createClass with the form values', async () => {
     const deps = makeDeps();
-    render(<RosterPage deps={deps} />);
+    render(
+      <MemoryRouter>
+        <RosterPage deps={deps} />
+      </MemoryRouter>,
+    );
     fireEvent.change(await screen.findByLabelText('Class name'), {
       target: { value: 'Period 1 Civics' },
     });
@@ -66,4 +79,16 @@ describe('RosterPage', () => {
       ),
     );
   });
+
+  it('shows a "Write feedback" link to /compose/:classId for each class', async () => {
+    const deps = makeDeps();
+    render(
+      <MemoryRouter>
+        <RosterPage deps={deps} />
+      </MemoryRouter>,
+    );
+    const link = await screen.findByRole("link", { name: /write feedback/i });
+    expect(link).toHaveAttribute("href", "/compose/class-a");
+  });
+
 });
