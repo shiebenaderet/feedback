@@ -54,4 +54,40 @@ describe('resolveActiveYear', () => {
     expect(id).toBe('year-current');
     expect(deps.storeYearId).toHaveBeenCalledWith('u1', 'year-current');
   });
+
+  it('lands on the POPULATED duplicate year, never an empty same-label duplicate', async () => {
+    // The exact failure: same label '2025–26' exists twice; the clock resolver
+    // returns the EMPTY one (smallest id), but the courses live in the other.
+    const deps = makeDeps({
+      getOrCreateCurrentYear: vi.fn(async () => 'year-empty-dupe'),
+      listYears: vi.fn(async () => [
+        { id: 'year-empty-dupe', label: '2025–26' },
+        { id: 'year-with-courses', label: '2025–26' },
+      ]),
+      listCourses: vi.fn(async (_db: unknown, _uid: string, yearId: string) =>
+        yearId === 'year-with-courses'
+          ? [{ id: 'c1', name: 'History' }, { id: 'c2', name: 'Geo' }]
+          : [],
+      ),
+    });
+    const id = await resolveActiveYear({} as never, 'u1', deps as never);
+    expect(id).toBe('year-with-courses');
+    expect(deps.storeYearId).toHaveBeenCalledWith('u1', 'year-with-courses');
+  });
+
+  it('ignores a STALE stored year that no longer has courses', async () => {
+    const deps = makeDeps({
+      readStoredYearId: vi.fn(() => 'year-empty'),
+      listYears: vi.fn(async () => [
+        { id: 'year-empty', label: '2025–26' },
+        { id: 'year-prev', label: '2025–26' },
+      ]),
+      listCourses: vi.fn(async (_db: unknown, _uid: string, yearId: string) =>
+        yearId === 'year-prev' ? [{ id: 'c1', name: 'History' }] : [],
+      ),
+    });
+    const id = await resolveActiveYear({} as never, 'u1', deps as never);
+    // Stale empty stored year is skipped; resolves to the populated one instead.
+    expect(id).toBe('year-prev');
+  });
 });
