@@ -21,11 +21,17 @@ function makeDraft(): MessageDraft {
   };
 }
 
+/** Captures the (path, id, data) of each setDoc so tests can assert idempotency. */
+function makeDeps() {
+  const doc = vi.fn((_db: unknown, path: string, id: string) => ({ __ref: `${path}/${id}` }));
+  const setDoc = vi.fn(async (_ref: unknown, _data: unknown) => undefined);
+  return { doc, setDoc };
+}
+
 describe('writeFeedbackHistory', () => {
-  it('writes a FeedbackHistoryEntry under the student with derived tags', async () => {
+  it('writes a FeedbackHistoryEntry at a deterministic {batchId}__{studentId} id with derived tags', async () => {
     const db = { __fake: true } as any;
-    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
-    const addDoc = vi.fn(async (_ref: unknown, _data: unknown) => ({ id: 'h1' }));
+    const deps = makeDeps();
 
     const id = await writeFeedbackHistory(
       db,
@@ -37,18 +43,21 @@ describe('writeFeedbackHistory', () => {
         gradingPeriod: 'Q1',
         label: 'Unit 3',
         sentAt: 1718000000000,
+        batchId: 'b9',
       },
-      { collection, addDoc } as any,
+      deps as any,
     );
 
-    expect(id).toBe('h1');
-    expect(collection).toHaveBeenCalledWith(
+    expect(id).toBe('b9__s1');
+    expect(deps.doc).toHaveBeenCalledWith(
       db,
       'teachers/u1/years/y1/courses/co1/periods/p4/students/s1/feedbackHistory',
+      'b9__s1',
     );
 
-    const written = addDoc.mock.calls[0][1] as any;
+    const written = deps.setDoc.mock.calls[0][1] as any;
     expect(written).toMatchObject({
+      ownerUid: 'u1',
       studentId: 's1',
       periodId: 'p4',
       courseId: 'co1',
@@ -59,7 +68,6 @@ describe('writeFeedbackHistory', () => {
       finalText: 'Great work Ana. Speak up more.',
       usedEntries: ['e1', 'e2'],
     });
-    // tags derived only from the USED entries (e1, e2) — not the unused e3.
     expect(written.tags).toEqual({
       areas: ['cer', 'discussion'],
       sentiments: ['strength', 'growth'],
@@ -67,10 +75,30 @@ describe('writeFeedbackHistory', () => {
     });
   });
 
+  it('is idempotent: re-writing the same (batch, student) overwrites the SAME doc id', async () => {
+    const db = { __fake: true } as any;
+    const deps = makeDeps();
+    const args = {
+      draft: makeDraft(),
+      bankEntries: makeBank(),
+      tree: { yearId: 'y1', courseId: 'co1', periodId: 'p4' },
+      gradingPeriod: 'Q1' as const,
+      label: '',
+      sentAt: 1,
+      batchId: 'b9',
+    };
+
+    await writeFeedbackHistory(db, 'u1', args, deps as any);
+    await writeFeedbackHistory(db, 'u1', args, deps as any);
+
+    // Both writes targeted the identical doc id — no duplicate history entry.
+    expect(deps.doc.mock.calls[0][2]).toBe('b9__s1');
+    expect(deps.doc.mock.calls[1][2]).toBe('b9__s1');
+  });
+
   it('omits an empty label rather than writing label:""', async () => {
     const db = { __fake: true } as any;
-    const collection = vi.fn(() => ({}));
-    const addDoc = vi.fn(async (_ref: unknown, _data: unknown) => ({ id: 'h2' }));
+    const deps = makeDeps();
 
     await writeFeedbackHistory(
       db,
@@ -82,18 +110,18 @@ describe('writeFeedbackHistory', () => {
         gradingPeriod: 'Q2',
         label: '',
         sentAt: 1,
+        batchId: 'b1',
       },
-      { collection, addDoc } as any,
+      deps as any,
     );
 
-    const written = addDoc.mock.calls[0][1] as any;
+    const written = deps.setDoc.mock.calls[0][1] as any;
     expect('label' in written).toBe(false);
   });
 
   it('resolves used entries by id, ignoring used ids missing from the bank', async () => {
     const db = { __fake: true } as any;
-    const collection = vi.fn(() => ({}));
-    const addDoc = vi.fn(async (_ref: unknown, _data: unknown) => ({ id: 'h3' }));
+    const deps = makeDeps();
 
     const draft: MessageDraft = { ...makeDraft(), usedEntries: ['e1', 'ghost'] };
     await writeFeedbackHistory(
@@ -106,14 +134,13 @@ describe('writeFeedbackHistory', () => {
         gradingPeriod: 'Q1',
         label: '',
         sentAt: 1,
+        batchId: 'b1',
       },
-      { collection, addDoc } as any,
+      deps as any,
     );
 
-    const written = addDoc.mock.calls[0][1] as any;
-    // 'ghost' is still recorded for traceability...
+    const written = deps.setDoc.mock.calls[0][1] as any;
     expect(written.usedEntries).toEqual(['e1', 'ghost']);
-    // ...but only the resolvable entry (e1) contributes derived tags.
     expect(written.tags.areas).toEqual(['cer']);
     expect(written.tags.sentiments).toEqual(['strength']);
   });

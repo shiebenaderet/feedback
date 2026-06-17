@@ -1,8 +1,8 @@
 import {
   collection as fbCollection,
-  addDoc as fbAddDoc,
   getDocs as fbGetDocs,
   doc as fbDoc,
+  setDoc as fbSetDoc,
   updateDoc as fbUpdateDoc,
   deleteDoc as fbDeleteDoc,
   type Firestore,
@@ -24,16 +24,35 @@ const studentsPath = (
 
 /** Injectable Firestore primitives for student writes. */
 export interface StudentWriteDeps {
-  collection: typeof fbCollection;
-  addDoc: typeof fbAddDoc;
+  doc: typeof fbDoc;
+  setDoc: typeof fbSetDoc;
 }
 
 const defaultWriteDeps: StudentWriteDeps = {
-  collection: fbCollection,
-  addDoc: fbAddDoc,
+  doc: fbDoc,
+  setDoc: fbSetDoc,
 };
 
-/** Persist imported students under their period. Returns the count written. */
+/**
+ * A stable Firestore doc id derived from the student's email, so the SAME
+ * student always lands on the SAME doc — re-importing a roster updates in place
+ * instead of duplicating. Email is normalized (trim + lowercase) and sanitized
+ * to the chars Firestore allows in a doc id ('/' and a few specials are out).
+ */
+export function studentDocIdFromEmail(email: string): string {
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[/\\.#$[\]]/g, '_');
+}
+
+/**
+ * Persist a period's students as an UPSERT keyed by email: each student is
+ * written at a deterministic email-derived id with merge, so re-importing the
+ * same CSV (or double-clicking Confirm) updates rather than duplicates. Students
+ * with no usable email are skipped (they'd otherwise mint an unkeyed duplicate).
+ * Returns the count actually written.
+ */
 export async function saveStudents(
   db: Firestore,
   uid: string,
@@ -43,12 +62,16 @@ export async function saveStudents(
   students: Student[],
   deps: StudentWriteDeps = defaultWriteDeps,
 ): Promise<number> {
-  const { collection, addDoc } = deps;
-  const ref = collection(db, studentsPath(uid, yearId, courseId, periodId));
+  const { doc, setDoc } = deps;
+  const path = studentsPath(uid, yearId, courseId, periodId);
+  let written = 0;
   for (const s of students) {
-    await addDoc(ref, { name: s.name, email: s.email, period: s.period });
+    const key = studentDocIdFromEmail(s.email ?? '');
+    if (key === '') continue; // no email → skip rather than create an unkeyed dupe
+    await setDoc(doc(db, path, key), { name: s.name, email: s.email, period: s.period }, { merge: true });
+    written += 1;
   }
-  return students.length;
+  return written;
 }
 
 /** Injectable Firestore primitives for student reads. */

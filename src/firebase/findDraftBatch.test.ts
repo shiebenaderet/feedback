@@ -3,35 +3,37 @@ import { findDraftBatch } from './findDraftBatch';
 import type { Batch } from '../types';
 
 describe('findDraftBatch', () => {
-  it('queries batches by periodId + draft status and returns the first match', async () => {
+  function makeDeps(docs: Array<{ id: string; data: () => Batch }>) {
+    return {
+      collection: vi.fn((_db: unknown, path: string) => ({ __coll: path })),
+      where: vi.fn((f: string, op: string, v: unknown) => ({ __where: [f, op, v] })),
+      query: vi.fn((coll: unknown, ...cs: unknown[]) => ({ __q: { coll, cs } })),
+      orderBy: vi.fn((f: unknown) => ({ __orderBy: f })),
+      documentId: vi.fn(() => '__name__'),
+      getDocs: vi.fn(async () => ({ docs })),
+    };
+  }
+
+  it('queries batches by periodId + draft status, ordered by doc id, returns the first', async () => {
     const db = { __fake: true };
-    const collection = vi.fn((_db: unknown, path: string) => ({ __coll: path }));
-    const where = vi.fn((f: string, op: string, v: unknown) => ({ __where: [f, op, v] }));
-    const query = vi.fn((coll: unknown, ...cs: unknown[]) => ({ __q: { coll, cs } }));
     const draft: Batch = {
       id: 'b1', yearId: 'y1', courseId: 'c1', periodId: 'p1', sharedHeader: 'Hi', status: 'draft',
     };
-    const getDocs = vi.fn(async () => ({ docs: [{ id: 'b1', data: () => draft }] }));
+    const deps = makeDeps([{ id: 'b1', data: () => draft }]);
 
-    const result = await findDraftBatch(db as never, 'u1', 'p1', {
-      collection, where, query, getDocs,
-    } as never);
+    const result = await findDraftBatch(db as never, 'u1', 'p1', deps as never);
 
-    expect(collection).toHaveBeenCalledWith(db, 'teachers/u1/batches');
-    expect(where).toHaveBeenCalledWith('periodId', '==', 'p1');
-    expect(where).toHaveBeenCalledWith('status', '==', 'draft');
+    expect(deps.collection).toHaveBeenCalledWith(db, 'teachers/u1/batches');
+    expect(deps.where).toHaveBeenCalledWith('periodId', '==', 'p1');
+    // Resumes both still-composing ('draft') and interrupted ('sending') batches.
+    expect(deps.where).toHaveBeenCalledWith('status', 'in', ['draft', 'sending']);
+    // Deterministic ordering so concurrent-create dupes resolve consistently.
+    expect(deps.orderBy).toHaveBeenCalledWith('__name__');
     expect(result).toEqual(draft);
   });
 
   it('returns null when no draft batch exists for the period', async () => {
-    const db = { __fake: true };
-    const deps = {
-      collection: vi.fn(() => ({})),
-      where: vi.fn(() => ({})),
-      query: vi.fn(() => ({})),
-      getDocs: vi.fn(async () => ({ docs: [] })),
-    };
-    const result = await findDraftBatch(db as never, 'u1', 'p1', deps as never);
+    const result = await findDraftBatch({ __fake: true } as never, 'u1', 'p1', makeDeps([]) as never);
     expect(result).toBeNull();
   });
 });

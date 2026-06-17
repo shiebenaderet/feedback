@@ -3,6 +3,8 @@ import {
   getDocs as fbGetDocs,
   query as fbQuery,
   where as fbWhere,
+  orderBy as fbOrderBy,
+  documentId as fbDocumentId,
   type Firestore,
 } from 'firebase/firestore';
 import type { Batch } from '../types';
@@ -12,6 +14,8 @@ export interface FindDraftBatchDeps {
   getDocs: typeof fbGetDocs;
   query: typeof fbQuery;
   where: typeof fbWhere;
+  orderBy: typeof fbOrderBy;
+  documentId: typeof fbDocumentId;
 }
 
 const defaultDeps: FindDraftBatchDeps = {
@@ -19,6 +23,8 @@ const defaultDeps: FindDraftBatchDeps = {
   getDocs: fbGetDocs,
   query: fbQuery,
   where: fbWhere,
+  orderBy: fbOrderBy,
+  documentId: fbDocumentId,
 };
 
 /**
@@ -32,11 +38,16 @@ export async function findDraftBatch(
   periodId: string,
   deps: FindDraftBatchDeps = defaultDeps,
 ): Promise<Batch | null> {
-  const { collection, getDocs, query, where } = deps;
+  const { collection, getDocs, query, where, orderBy, documentId } = deps;
+  // Resume any OPEN batch for the period: 'draft' (still composing) OR 'sending'
+  // (a send that was interrupted before completing) — a 'sending' batch would
+  // otherwise be permanently stranded with its not-yet-sent drafts unreachable.
+  // orderBy(documentId()) makes the choice DETERMINISTIC if duplicates exist.
   const q = query(
     collection(db, `teachers/${uid}/batches`),
     where('periodId', '==', periodId),
-    where('status', '==', 'draft'),
+    where('status', 'in', ['draft', 'sending']),
+    orderBy(documentId()),
   );
   const snap = await getDocs(q);
   const first = snap.docs[0];

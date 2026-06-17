@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createYear, getOrCreateCurrentYear } from './years';
+import { createYear, getOrCreateCurrentYear, listYears } from './years';
 
 describe('createYear', () => {
   it('writes to teachers/{uid}/years and returns the new yearId', async () => {
@@ -80,5 +80,24 @@ describe('getOrCreateCurrentYear', () => {
     expect(first).toBe('year-aaa');
     expect(second).toBe('year-aaa');
     expect(addDoc).not.toHaveBeenCalled();
+  });
+});
+
+describe('listYears', () => {
+  it('returns all year docs sorted newest-label-first', async () => {
+    const db = { __fake: true };
+    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
+    const getDocs = vi.fn(async () => ({
+      docs: [
+        { id: 'y-old', data: () => ({ label: '2024–25' }) },
+        { id: 'y-new', data: () => ({ label: '2026–27' }) },
+        { id: 'y-mid', data: () => ({ label: '2025–26' }) },
+      ],
+    }));
+
+    const years = await listYears(db as any, 'u1', { collection, getDocs } as any);
+
+    expect(collection).toHaveBeenCalledWith(db, 'teachers/u1/years');
+    expect(years.map((y) => y.id)).toEqual(['y-new', 'y-mid', 'y-old']);
   });
 });

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
-import { getOrCreateCurrentYear } from '../data/years';
-import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
+import { resolveActiveYear } from '../data/activeYear';
 import { listCourses } from '../data/courses';
 import { createCourse } from '../data/courses';
 import { createPeriod } from '../data/periods';
@@ -44,11 +43,11 @@ export function SetupPage({ deps }: { deps?: Partial<SetupPageDeps> }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Resolve the current year on mount (Phase-1 getOrCreateCurrentYear); the test
-  // injects yearId so this branch is skipped under the mock.
+  // Resolve the active year on mount via the shared resolver so every page
+  // agrees on the year; the test injects yearId so this is skipped under mocks.
   useEffect(() => {
     if (!uid || yearId) return;
-    getOrCreateCurrentYear(db, uid, currentSchoolYearLabel())
+    resolveActiveYear(db, uid)
       .then((id) => setYearId(id))
       .catch(() => setError('Could not load the current year.'));
   }, [uid, yearId]);

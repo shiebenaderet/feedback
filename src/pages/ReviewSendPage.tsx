@@ -21,7 +21,7 @@ import {
 import { GRADING_PERIODS, type GradingPeriod } from '../feedback/taxonomy';
 import type { Batch, BankEntry, MessageDraft } from '../types';
 import type { GmailSender } from '../send/batchSendMachine';
-import { tokens } from '../ui/theme';
+import { tokens, panelStyle } from '../ui/theme';
 
 const SUBJECT = 'Feedback on your work';
 
@@ -132,6 +132,7 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
       gradingPeriod: gp.gradingPeriod,
       label: gp.label,
       bankEntries,
+      batchId: batch.id,
       writeFeedbackHistory: api.writeFeedbackHistory,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,6 +150,43 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
         <p>Loading…</p>
       </main>
     );
+
+  // Already-sent batches render read-only: re-opening (Back button, bookmarked
+  // URL, second tab) must NOT re-send or re-write history.
+  if (batch.status === 'sent') {
+    return (
+      <>
+        <NavBar />
+        <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
+          <h1>Review & send · {batch.sharedHeader}</h1>
+          <p
+            role="status"
+            style={{
+              ...panelStyle(),
+              padding: tokens.space(2),
+              color: tokens.color.teal,
+              fontWeight: 600,
+            }}
+          >
+            ✓ This feedback round has already been sent.
+          </p>
+          <ul style={{ display: 'grid', gap: tokens.space(1), padding: 0, listStyle: 'none' }}>
+            {messages.map((m) => (
+              <li key={m.studentId} style={{ ...panelStyle(), padding: tokens.space(2) }}>
+                <strong>{m.name}</strong>
+                <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap', color: tokens.color.subtle }}>
+                  {m.finalText}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p style={{ marginTop: 24 }}>
+            <Link to="/home">← Back to Home</Link>
+          </p>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>

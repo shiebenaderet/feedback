@@ -5,8 +5,7 @@ import { db } from '../firebase/config';
 import { createBatch, updateBatch } from '../firebase/batches';
 import { findDraftBatch } from '../firebase/findDraftBatch';
 import { saveMessageDraft, listMessages } from '../firebase/messages';
-import { getOrCreateCurrentYear } from '../data/years';
-import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
+import { resolveActiveYear } from '../data/activeYear';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
 import { ComposeHistoryPanel } from '../compose/ComposeHistoryPanel';
@@ -43,8 +42,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const { user } = useAuth();
   const uid = deps?.uid ?? user?.uid ?? '';
   const api = {
-    resolveYearId:
-      deps?.resolveYearId ?? ((d, u) => getOrCreateCurrentYear(d, u, currentSchoolYearLabel())),
+    resolveYearId: deps?.resolveYearId ?? ((d, u) => resolveActiveYear(d, u)),
     loadComposeData: deps?.loadComposeData ?? loadComposeData,
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
@@ -86,14 +84,17 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         // loses work; only start a fresh batch when there's nothing to resume.
         // Resilient: if the lookup fails (e.g. index still building), fall back
         // to a fresh batch rather than blocking compose.
+        const resume = async (b: { id: string; sharedHeader?: string }) => {
+          setBatchId(b.id);
+          setSharedHeader(b.sharedHeader ?? '');
+          const saved = await api.listMessages(db, uid, b.id);
+          if (alive) setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
+        };
+
         const existing = await api.findDraftBatch(db, uid, periodId).catch(() => null);
         if (!alive) return;
         if (existing) {
-          setBatchId(existing.id);
-          setSharedHeader(existing.sharedHeader ?? '');
-          const saved = await api.listMessages(db, uid, existing.id);
-          if (!alive) return;
-          setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
+          await resume(existing);
           return;
         }
         const id = await api.createBatch(db, uid, {
@@ -102,6 +103,15 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           yearId: d.yearId,
           sharedHeader: '',
         });
+        if (!alive) return;
+        // Re-check: another tab may have created a draft during the create gap.
+        // If so, adopt the canonical (deterministic) one and abandon ours.
+        const canonical = await api.findDraftBatch(db, uid, periodId).catch(() => null);
+        if (!alive) return;
+        if (canonical && canonical.id !== id) {
+          await resume(canonical);
+          return;
+        }
         if (alive) setBatchId(id);
       })
       .catch(() => alive && setError('Could not load this period.'));

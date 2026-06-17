@@ -4,8 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { listStudents, saveStudents, updateStudent, deleteStudent } from '../data/students';
-import { getOrCreateCurrentYear } from '../data/years';
-import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
+import { resolveActiveYear } from '../data/activeYear';
 import { downloadRosterTemplate } from '../roster/downloadRosterTemplate';
 import { NavBar } from '../components/NavBar';
 import { Breadcrumbs } from '../components/Breadcrumbs';
@@ -65,10 +64,10 @@ export function RosterPage({ deps }: { deps?: Partial<RosterPageDeps> }) {
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Resolve the active year (the test injects deps.yearId, skipping this).
+  // Resolve the active year via the shared resolver (test injects deps.yearId).
   useEffect(() => {
     if (!uid || yearId) return;
-    getOrCreateCurrentYear(db, uid, currentSchoolYearLabel())
+    resolveActiveYear(db, uid)
       .then(setYearId)
       .catch(() => setError('Could not load the current year.'));
   }, [uid, yearId]);
