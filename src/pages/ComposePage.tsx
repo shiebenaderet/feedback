@@ -86,14 +86,17 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         // loses work; only start a fresh batch when there's nothing to resume.
         // Resilient: if the lookup fails (e.g. index still building), fall back
         // to a fresh batch rather than blocking compose.
+        const resume = async (b: { id: string; sharedHeader?: string }) => {
+          setBatchId(b.id);
+          setSharedHeader(b.sharedHeader ?? '');
+          const saved = await api.listMessages(db, uid, b.id);
+          if (alive) setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
+        };
+
         const existing = await api.findDraftBatch(db, uid, periodId).catch(() => null);
         if (!alive) return;
         if (existing) {
-          setBatchId(existing.id);
-          setSharedHeader(existing.sharedHeader ?? '');
-          const saved = await api.listMessages(db, uid, existing.id);
-          if (!alive) return;
-          setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
+          await resume(existing);
           return;
         }
         const id = await api.createBatch(db, uid, {
@@ -102,6 +105,15 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           yearId: d.yearId,
           sharedHeader: '',
         });
+        if (!alive) return;
+        // Re-check: another tab may have created a draft during the create gap.
+        // If so, adopt the canonical (deterministic) one and abandon ours.
+        const canonical = await api.findDraftBatch(db, uid, periodId).catch(() => null);
+        if (!alive) return;
+        if (canonical && canonical.id !== id) {
+          await resume(canonical);
+          return;
+        }
         if (alive) setBatchId(id);
       })
       .catch(() => alive && setError('Could not load this period.'));
