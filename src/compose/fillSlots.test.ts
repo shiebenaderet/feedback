@@ -80,4 +80,41 @@ describe('fillSlots', () => {
     };
     expect(() => fillSlots(entry, baseStudent, baseClass, {})).toThrow(/mystery/);
   });
+
+  describe('lenient mode — empty optional add-on slots degrade cleanly', () => {
+    it('appends a filled optional detail sentence', () => {
+      const entry = {
+        templateText: 'You have great ideas and a real gift for this class.{detail}',
+        slots: [{ key: 'detail', kind: 'fill' as const }],
+      };
+      const result = fillSlots(
+        entry,
+        baseStudent,
+        baseClass,
+        { detail: ' I especially loved your New Deal point.' },
+        { lenient: true },
+      );
+      expect(result).toBe(
+        'You have great ideas and a real gift for this class. I especially loved your New Deal point.',
+      );
+    });
+
+    it('leaves no trailing space when the optional detail is skipped', () => {
+      const entry = {
+        templateText: 'You have great ideas and a real gift for this class.{detail}',
+        slots: [{ key: 'detail', kind: 'fill' as const }],
+      };
+      const result = fillSlots(entry, baseStudent, baseClass, {}, { lenient: true });
+      expect(result).toBe('You have great ideas and a real gift for this class.');
+    });
+
+    it('collapses doubled spaces from an empty mid-text slot', () => {
+      const entry = {
+        templateText: 'Strong work this year. {detail} Keep it up.',
+        slots: [{ key: 'detail', kind: 'fill' as const }],
+      };
+      const result = fillSlots(entry, baseStudent, baseClass, {}, { lenient: true });
+      expect(result).toBe('Strong work this year. Keep it up.');
+    });
+  });
 });

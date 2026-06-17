@@ -42,9 +42,10 @@ describe('useComposeMessage', () => {
     );
     act(() => result.current.addEntry('e1'));
     expect(result.current.usedEntries).toEqual(['e1']);
-    // auto slots resolved; fill slot still blank
+    // auto slots resolved; the still-blank fill slot leaves no orphan space
+    // before the period (lenient preview tidies empty optional slots).
     expect(result.current.finalText).toBe(
-      'Carlos showed real growth this spring, especially when .',
+      'Carlos showed real growth this spring, especially when.',
     );
   });
 

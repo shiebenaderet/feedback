@@ -50,6 +50,20 @@ function escapeRegExp(s: string): string {
 }
 
 /**
+ * Tidies the whitespace left after an OPTIONAL add-on slot was filled with ""
+ * in lenient mode, so a skipped detail never leaves a doubled space or a space
+ * before punctuation. Optional details are written as self-contained add-on
+ * sentences (e.g. "...this class.{detail}"), so empty ones just disappear.
+ * Only runs in lenient (preview) mode; strict send-time text is exact.
+ */
+function tidyEmptyClauses(text: string): string {
+  return text
+    .replace(/[ \t]{2,}/g, ' ') // collapse doubled spaces
+    .replace(/\s+([.!?,;:])/g, '$1') // no space before punctuation
+    .trim();
+}
+
+/**
  * Pure: given a bank entry, a student, class metadata, and the teacher's fill answers,
  * return the finished message text. Throws UnfilledSlotError if a "fill" slot is empty.
  */
@@ -90,6 +104,10 @@ export function fillSlots(
     const token = new RegExp(escapeRegExp(`{${slot.key}}`), 'g');
     text = text.replace(token, value);
   }
+
+  // In lenient mode an optional inline slot may have collapsed to ""; tidy the
+  // orphaned punctuation/whitespace it leaves so the preview reads cleanly.
+  if (options.lenient) text = tidyEmptyClauses(text);
 
   return text;
 }
