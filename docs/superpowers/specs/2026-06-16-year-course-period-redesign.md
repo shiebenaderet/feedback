@@ -70,6 +70,15 @@ comments, filling slots); the structured `tags` are inherited automatically from
 used. The only thing set per round is the **grading period** (+ optional label), chosen once when
 the batch starts and stamped on every message. No extra tagging work.
 
+**Design principle — classification choices are config, not baked-in (revisit without an overhaul).**
+The sentiment mapping (`success→strength`, etc.), the grading-period list, and the tag categories
+live in **one config module** (e.g. `src/feedback/taxonomy.ts`) that the send, history, and trends
+code all read from. Changing a mapping later = editing one file, not hunting through features. And
+because every `feedbackHistory` entry stores the **raw `usedEntries` (bank entry ids)** alongside
+the derived tags, trends can be **re-derived under a new mapping at any time** — the source data is
+never lost, only its interpretation is configurable. This is what makes "I'll want to revisit these
+choices later" safe: the taxonomy is swappable and the history is reclassifiable.
+
 **Two history surfaces (both built):**
 1. **Inline-while-composing** — when writing a student's *next* round, a panel shows their recent
    `feedbackHistory` (dated: "Oct 12 · Q1 — speak up more in debates"), so the teacher writes with
