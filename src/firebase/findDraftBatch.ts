@@ -39,13 +39,14 @@ export async function findDraftBatch(
   deps: FindDraftBatchDeps = defaultDeps,
 ): Promise<Batch | null> {
   const { collection, getDocs, query, where, orderBy, documentId } = deps;
-  // orderBy(documentId()) makes the choice DETERMINISTIC: if two draft batches
-  // ever exist for one period (a concurrent first-create race), every session
-  // resolves to the same one (smallest id) instead of an arbitrary doc.
+  // Resume any OPEN batch for the period: 'draft' (still composing) OR 'sending'
+  // (a send that was interrupted before completing) — a 'sending' batch would
+  // otherwise be permanently stranded with its not-yet-sent drafts unreachable.
+  // orderBy(documentId()) makes the choice DETERMINISTIC if duplicates exist.
   const q = query(
     collection(db, `teachers/${uid}/batches`),
     where('periodId', '==', periodId),
-    where('status', '==', 'draft'),
+    where('status', 'in', ['draft', 'sending']),
     orderBy(documentId()),
   );
   const snap = await getDocs(q);

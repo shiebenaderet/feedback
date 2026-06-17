@@ -101,14 +101,22 @@ export function ReviewScreenContainer({
   }
 
   function markSent(id: string) {
-    setSentInCopyPaste((prev) => ({ ...prev, [id]: true }));
+    const nextSent = { ...sentInCopyPaste, [id]: true };
+    setSentInCopyPaste(nextSent);
     const draft = results.find((r) => r.studentId === id);
     if (draft) recordHistory({ ...draft, status: 'sent' });
+    // When this was the LAST student, the copy-paste round is complete → flip
+    // the batch to 'sent' so it isn't stranded at 'sending' forever.
+    if (results.every((r) => nextSent[r.studentId])) {
+      void setBatchStatus('sent');
+    }
   }
 
   function markAllSent() {
     setSentInCopyPaste(Object.fromEntries(results.map((r) => [r.studentId, true])));
     for (const r of results) recordHistory({ ...r, status: 'sent' });
+    // The whole round went out → mark the batch done (was stuck at 'sending').
+    void setBatchStatus('sent');
   }
 
   const sentCount = results.filter((r) => r.status === 'sent').length;

@@ -161,6 +161,46 @@ describe('ReviewScreenContainer', () => {
     expect(onSent.mock.calls.map((c) => (c[0] as MessageDraft).studentId).sort()).toEqual(['s1', 's2']);
   });
 
+  it('Mode B: marking all sent flips the batch to "sent" (not stranded at "sending")', async () => {
+    const setBatchStatus = vi.fn(async (_s: Batch['status']) => {});
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={setBatchStatus}
+        onSent={vi.fn(async () => {})}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /mark all sent/i }));
+    await waitFor(() => expect(setBatchStatus).toHaveBeenCalledWith('sent'));
+  });
+
+  it('Mode B: marking each student sent in turn flips the batch to "sent" on the last one', async () => {
+    const setBatchStatus = vi.fn(async (_s: Batch['status']) => {});
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={setBatchStatus}
+        onSent={vi.fn(async () => {})}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i })); // s1
+    // Not done yet — only the 'sending' from confirm so far, no 'sent'.
+    expect(setBatchStatus).not.toHaveBeenCalledWith('sent');
+    fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i })); // s2 (last)
+    await waitFor(() => expect(setBatchStatus).toHaveBeenCalledWith('sent'));
+  });
+
   it('Mode B: marking the same student sent twice writes history only once', async () => {
     const onSent = vi.fn(async (_draft: MessageDraft) => {});
     render(

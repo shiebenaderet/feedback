@@ -25,7 +25,8 @@ describe('findDraftBatch', () => {
 
     expect(deps.collection).toHaveBeenCalledWith(db, 'teachers/u1/batches');
     expect(deps.where).toHaveBeenCalledWith('periodId', '==', 'p1');
-    expect(deps.where).toHaveBeenCalledWith('status', '==', 'draft');
+    // Resumes both still-composing ('draft') and interrupted ('sending') batches.
+    expect(deps.where).toHaveBeenCalledWith('status', 'in', ['draft', 'sending']);
     // Deterministic ordering so concurrent-create dupes resolve consistently.
     expect(deps.orderBy).toHaveBeenCalledWith('__name__');
     expect(result).toEqual(draft);
