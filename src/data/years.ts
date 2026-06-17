@@ -58,8 +58,17 @@ export async function getOrCreateCurrentYear(
   const { collection, addDoc, getDocs } = deps;
   const ref = collection(db, `teachers/${uid}/years`);
   const snap = await getDocs(ref);
-  const existing = snap.docs.find((d) => (d.data() as Year).label === label);
-  if (existing) return existing.id;
+  // A read-then-write race (or historical double-mounts) can leave MORE THAN ONE
+  // year doc with the same label. find() returns them in Firestore's unspecified
+  // order, so different sessions could resolve to different year docs — stranding
+  // a teacher's courses under one and showing an empty one under another. Pick the
+  // matching year with the smallest doc id so EVERY session resolves to the SAME
+  // year deterministically, regardless of how many duplicates exist.
+  const matches = snap.docs
+    .filter((d) => (d.data() as Year).label === label)
+    .map((d) => d.id)
+    .sort();
+  if (matches.length > 0) return matches[0];
   const docRef = await addDoc(ref, { label });
   return docRef.id;
 }
