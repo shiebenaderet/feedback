@@ -1,15 +1,130 @@
+/* ── B+C design baseline ─────────────────────────────────────────────
+   Styles the raw HTML primitives so every screen inherits the calm-dark
+   look without per-component work. Palette mirrors src/ui/theme.ts. */
+
+:root {
+  --bg: #0d0d0f;
+  --panel: #15171c;
+  --panel-alt: #1a1d23;
+  --teal: #5fb8a8;
+  --teal-ink: #0d1311;
+  --text: #e7e9ee;
+  --muted: #9aa1ad;
+  --border: #23262e;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: #0d0d0f;
-  color: #e7e9ee;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
 }
 
-::selection { background: #5fb8a8; color: #0d1311; }
+::selection { background: var(--teal); color: var(--teal-ink); }
 
-a { color: #5fb8a8; }
+/* Headings */
+h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 12px; }
+h2 { font-size: 20px; letter-spacing: -0.01em; margin: 24px 0 12px; }
+h3 { font-size: 16px; margin: 16px 0 8px; }
+
+/* Links */
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Form controls — the big fix: no more stark-white default inputs. */
+input[type='text'],
+input[type='email'],
+input:not([type]),
+textarea,
+select {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+input[type='text']:focus,
+input[type='email']:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(95, 184, 168, 0.18);
+}
+input::placeholder, textarea::placeholder { color: #6e7480; }
+
+textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
+
+/* Labels — stack above their input by default. */
+label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted);
+}
+/* Inline checkbox/radio labels read as a row, not a stack. */
+label:has(> input[type='checkbox']),
+label:has(> input[type='radio']) {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons — default to a quiet dark chip; .accent / submit opt into teal. */
+button {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+button:hover:not(:disabled) { border-color: #3a3f4b; }
+button:disabled { opacity: 0.5; cursor: default; }
+
+button.accent,
+button[type='submit'] {
+  background: var(--teal);
+  color: var(--teal-ink);
+  border-color: var(--teal);
+  font-weight: 600;
+}
+button.accent:hover:not(:disabled),
+button[type='submit']:hover:not(:disabled) { background: #6cc6b6; }
+
+button.danger { color: #ff8a8a; border-color: #4a2a2a; }
+button.danger:hover:not(:disabled) { background: #2a1a1a; }
+
+/* Tables (roster) */
+table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+tr:last-child td { border-bottom: none; }
+
+/* Lists used as menus (class list, roster nav) shouldn't show bullets. */
+ul { padding-left: 0; }
+section ul, nav ul { list-style: none; margin: 0; }
+
+/* role=alert error text */
+[role='alert'] { color: #ff8a8a; }
