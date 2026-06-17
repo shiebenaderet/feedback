@@ -1,0 +1,15 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: #0d0d0f;
+  color: #e7e9ee;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: #5fb8a8; color: #0d1311; }
+
+a { color: #5fb8a8; }
