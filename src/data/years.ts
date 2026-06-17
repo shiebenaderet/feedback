@@ -5,6 +5,7 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import type { Year } from '../types';
+import { currentSchoolYearLabel } from './currentSchoolYearLabel';
 
 /** Injectable Firestore primitives for year writes. */
 export interface YearWriteDeps {
@@ -51,7 +52,7 @@ const defaultGetOrCreateDeps: YearGetOrCreateDeps = {
 export async function getOrCreateCurrentYear(
   db: Firestore,
   uid: string,
-  label: string,
+  label: string = currentSchoolYearLabel(),
   deps: YearGetOrCreateDeps = defaultGetOrCreateDeps,
 ): Promise<string> {
   const { collection, addDoc, getDocs } = deps;

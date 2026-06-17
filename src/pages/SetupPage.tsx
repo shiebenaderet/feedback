@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { listCourses } from '../data/courses';
 import { createCourse } from '../data/courses';
 import { createPeriod } from '../data/periods';
@@ -12,15 +13,6 @@ import { AddCourseCard, type NewCourseInput } from '../components/AddCourseCard'
 import { NavBar } from '../components/NavBar';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import type { Course } from '../types';
-
-/** The current academic-year label, e.g. "2025–26" (rolls over in August). */
-function currentSchoolYearLabel(): string {
-  const now = new Date();
-  // Aug (month 7) onward belongs to the year that starts now; before that, last year.
-  const startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  const endTwo = String((startYear + 1) % 100).padStart(2, '0');
-  return `${startYear}–${endTwo}`;
-}
 import { tokens, panelStyle } from '../ui/theme';
 
 /** Firestore/auth are injectable so the smoke test drives it without a backend. */

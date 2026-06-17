@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import type { Firestore } from 'firebase/firestore';
 import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { listCourses } from '../data/courses';
 import { listPeriods } from '../data/periods';
 import { rosterSize } from '../data/students';
@@ -16,14 +17,6 @@ import { tokens, panelStyle } from '../ui/theme';
 
 /** Default grading period for Home's progress when none is chosen (last in list = EOY). */
 const DEFAULT_GRADING_PERIOD = GRADING_PERIODS[GRADING_PERIODS.length - 1];
-
-/** The current academic-year label, e.g. "2025–26" (rolls over in August). */
-function currentSchoolYearLabel(): string {
-  const now = new Date();
-  const startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  const endTwo = String((startYear + 1) % 100).padStart(2, '0');
-  return `${startYear}–${endTwo}`;
-}
 
 /** A period row already resolved with its progress count, ready to render. */
 interface PeriodRow extends Period {
