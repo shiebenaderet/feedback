@@ -16,18 +16,29 @@ describe('seed comment bank', () => {
       expect(areas.has(a), `area ${a}`).toBe(true);
     }
     // ...plus the generic comment areas.
-    for (const a of ['contribution', 'attitude', 'questions', 'perseverance', 'readiness']) {
+    for (const a of [
+      'contribution', 'attitude', 'questions', 'perseverance', 'readiness',
+      'ideas', 'quality', 'focus', 'attendance',
+    ]) {
       expect(areas.has(a), `generic area ${a}`).toBe(true);
     }
     expect(types).toEqual(new Set(['success', 'growth', 'behavior', 'skill']));
   });
 
-  it('ships 36 generic, slot-free comments tagged success or growth', () => {
+  it('ships a large generic set tagged success/growth/skill', () => {
     const generic = SEED_BANK.filter((e) => e.id.startsWith('gen-'));
-    expect(generic.length).toBe(36);
+    expect(generic.length).toBeGreaterThanOrEqual(55);
     for (const e of generic) {
-      expect(e.slots.length, `${e.id} should be slot-free`).toBe(0);
-      expect(['success', 'growth']).toContain(e.tags.type);
+      expect(['success', 'growth', 'skill']).toContain(e.tags.type);
+    }
+  });
+
+  it("generic comments are either slot-free or use only an optional 'detail' add-on", () => {
+    const generic = SEED_BANK.filter((e) => e.id.startsWith('gen-'));
+    for (const e of generic) {
+      for (const s of e.slots) {
+        expect(s.key, `${e.id} slot`).toBe('detail');
+      }
     }
   });
 

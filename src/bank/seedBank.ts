@@ -303,6 +303,131 @@ export const SEED_BANK: BankEntry[] = [
     'My hope for you in high school is that you keep taking on challenges that stretch you instead of playing it safe. You grow the most when you reach a little past comfortable — go find those moments.',
     { type: 'growth', area: 'readiness', objective: 'challenge', tone: 'encouraging' },
   ),
+
+  // ============================================================
+  // More generic comments. Some end with an OPTIONAL "{detail}" add-on sentence —
+  // fill it to personalize, or skip it and the comment still reads cleanly.
+  // ============================================================
+
+  // ---- Ideas & speaking up (voice) ----
+  entry(
+    'gen-ideas-success-1',
+    'You have great ideas and a sharp mind for this subject. When you share your thinking, it pushes the whole class forward.{detail}',
+    { type: 'success', area: 'ideas', objective: 'voice', tone: 'warm' },
+  ),
+  entry(
+    'gen-ideas-success-2',
+    'Some of the most interesting thinking in class this year came from you. You make connections other students miss.{detail}',
+    { type: 'success', area: 'ideas', objective: 'voice', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-ideas-skill-1',
+    "You've grown into a real thinker this year — your ideas are more original and better supported than they were in the fall. Keep developing that voice.",
+    { type: 'skill', area: 'ideas', objective: 'voice', tone: 'warm' },
+  ),
+  entry(
+    'gen-ideas-growth-1',
+    "You have great ideas — now the goal is to speak up and share them more in class. Your thinking deserves to be heard, so don't keep it to yourself.{detail}",
+    { type: 'growth', area: 'ideas', objective: 'voice', tone: 'direct' },
+  ),
+  entry(
+    'gen-ideas-growth-2',
+    "A goal for you is to trust your ideas enough to put them out there before you're 100% sure. Some of the best class discussions start with a half-formed thought said out loud.",
+    { type: 'growth', area: 'ideas', objective: 'voice', tone: 'encouraging' },
+  ),
+
+  // ---- Quality of work ----
+  entry(
+    'gen-quality-success-1',
+    'The care you put into your work really shows. You go beyond just finishing and aim for something you can be proud of.{detail}',
+    { type: 'success', area: 'quality', objective: 'craftsmanship', tone: 'warm' },
+  ),
+  entry(
+    'gen-quality-success-2',
+    'Your work this year was consistently thoughtful and thorough. You pay attention to detail in a way that sets your work apart.',
+    { type: 'success', area: 'quality', objective: 'craftsmanship', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-quality-skill-1',
+    "You've gotten noticeably better at revising — taking feedback and actually using it to make your next draft stronger. That's a skill a lot of adults never master.",
+    { type: 'skill', area: 'quality', objective: 'revision', tone: 'warm' },
+  ),
+  entry(
+    'gen-quality-growth-1',
+    'A goal going forward: give your work a second look before you turn it in. You have the ability to do excellent work — slowing down to check it is what will get you there.{detail}',
+    { type: 'growth', area: 'quality', objective: 'craftsmanship', tone: 'direct' },
+  ),
+  entry(
+    'gen-quality-growth-2',
+    "One next step is to push your work from 'done' to 'your best.' You're capable of more than the minimum, and I'd love to see you aim higher even when no one's requiring it.",
+    { type: 'growth', area: 'quality', objective: 'craftsmanship', tone: 'warm' },
+  ),
+
+  // ---- Focus & engagement (skill-heavy) ----
+  entry(
+    'gen-focus-success-1',
+    "When you're locked in, your focus is a real strength — you tune out distractions and get deep into the work. That's a powerful skill to have.",
+    { type: 'success', area: 'focus', objective: 'engagement', tone: 'warm' },
+  ),
+  entry(
+    'gen-focus-skill-1',
+    "You've gotten better at managing your own attention this year — catching yourself when you drift and getting back on task. That self-awareness will serve you everywhere.",
+    { type: 'skill', area: 'focus', objective: 'self-regulation', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-focus-growth-1',
+    'A goal for you is to bring your focus from the very start of class instead of easing in. You do strong work once you settle — getting there faster will make a big difference.{detail}',
+    { type: 'growth', area: 'focus', objective: 'engagement', tone: 'direct' },
+  ),
+  entry(
+    'gen-focus-growth-2',
+    "One next step is to notice what pulls your attention away and build a plan for it — moving seats, putting the phone away, whatever helps. You've got the ability; protecting your focus is the goal.",
+    { type: 'growth', area: 'focus', objective: 'self-regulation', tone: 'warm' },
+  ),
+
+  // ---- Attendance ----
+  entry(
+    'gen-attendance-success-1',
+    'Class was better on the days you were in it — your presence and energy added something real. Thank you for showing up and being part of this community.{detail}',
+    { type: 'success', area: 'attendance', objective: 'presence', tone: 'warm' },
+  ),
+  entry(
+    'gen-attendance-success-2',
+    'Your attendance and reliability this year stood out. Being here, ready to go, day after day is a quiet strength that makes everything else possible.',
+    { type: 'success', area: 'attendance', objective: 'consistency', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-attendance-growth-1',
+    "When you were here, you did great work — that's exactly why I'd love to see you in class more often next year. The hardest part is just getting through the door; the rest you can handle.{detail}",
+    { type: 'growth', area: 'attendance', objective: 'presence', tone: 'warm' },
+  ),
+  entry(
+    'gen-attendance-growth-2',
+    'A real goal for next year is staying on top of work when you miss class. Absences happen, but checking in and making things up quickly will keep them from snowballing — and you are fully capable of it.{detail}',
+    { type: 'growth', area: 'attendance', objective: 'recovery', tone: 'direct' },
+  ),
+  entry(
+    'gen-attendance-growth-3',
+    'One thing to focus on is getting to class on time. You miss important pieces in those first few minutes, and arriving ready from the start will help you more than you might think.',
+    { type: 'growth', area: 'attendance', objective: 'punctuality', tone: 'direct' },
+  ),
+  entry(
+    'gen-attendance-growth-4',
+    "It was a tough year for attendance, and I want you to know the door is always open — your spot in this class is yours. Next year, let's make getting here the first win of every day.{detail}",
+    { type: 'growth', area: 'attendance', objective: 'presence', tone: 'warm' },
+  ),
+
+  // ---- More attitude / kindness skill ----
+  entry(
+    'gen-kindness-success-1',
+    'You treat the people around you with genuine kindness, and it does not go unnoticed. That decency matters more than any grade I could give.{detail}',
+    { type: 'success', area: 'attitude', objective: 'kindness', tone: 'warm' },
+  ),
+  entry(
+    'gen-kindness-success-2',
+    'You have a knack for making other people feel included and respected. That is a rare gift, and our class was warmer because of it.',
+    { type: 'success', area: 'attitude', objective: 'kindness', tone: 'encouraging' },
+  ),
 ];
 
 // Stable identity for idempotent install: the entry's own id.

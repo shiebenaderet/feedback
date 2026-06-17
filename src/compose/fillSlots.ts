@@ -1,4 +1,5 @@
 // src/compose/fillSlots.ts
+import { firstName } from './firstName';
 
 export interface Slot {
   key: string;
@@ -36,7 +37,7 @@ function resolveAuto(
 ): string {
   switch (key) {
     case 'name':
-      return student.name;
+      return firstName(student.name);
     case 'semester':
       return classMeta.semester ?? '';
     default:
@@ -46,6 +47,20 @@ function resolveAuto(
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Tidies the whitespace left after an OPTIONAL add-on slot was filled with ""
+ * in lenient mode, so a skipped detail never leaves a doubled space or a space
+ * before punctuation. Optional details are written as self-contained add-on
+ * sentences (e.g. "...this class.{detail}"), so empty ones just disappear.
+ * Only runs in lenient (preview) mode; strict send-time text is exact.
+ */
+function tidyEmptyClauses(text: string): string {
+  return text
+    .replace(/[ \t]{2,}/g, ' ') // collapse doubled spaces
+    .replace(/\s+([.!?,;:])/g, '$1') // no space before punctuation
+    .trim();
 }
 
 /**
@@ -89,6 +104,10 @@ export function fillSlots(
     const token = new RegExp(escapeRegExp(`{${slot.key}}`), 'g');
     text = text.replace(token, value);
   }
+
+  // In lenient mode an optional inline slot may have collapsed to ""; tidy the
+  // orphaned punctuation/whitespace it leaves so the preview reads cleanly.
+  if (options.lenient) text = tidyEmptyClauses(text);
 
   return text;
 }
