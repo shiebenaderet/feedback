@@ -15,6 +15,7 @@ export interface ClassMeta {
   period?: string;
   semester?: string;
   unit?: string;
+  archived?: boolean;
 }
 
 export type SlotKind = 'auto' | 'fill';

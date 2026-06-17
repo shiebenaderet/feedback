@@ -25,4 +25,34 @@ describe('listClasses', () => {
     ];
     expect(result).toEqual(expected);
   });
+
+  const archivedSnapshot = {
+    docs: [
+      { id: 'class-a', data: () => ({ name: 'Active' }) },
+      { id: 'class-z', data: () => ({ name: 'Old', archived: true }) },
+    ],
+  };
+
+  it('hides archived classes by default', async () => {
+    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
+    const getDocs = vi.fn(async () => archivedSnapshot);
+    const result = await listClasses({ __fake: true } as any, 'teacher-1', {
+      collection,
+      getDocs,
+    } as any);
+    expect(result.map((c) => c.id)).toEqual(['class-a']);
+  });
+
+  it('includes archived classes when includeArchived is true', async () => {
+    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
+    const getDocs = vi.fn(async () => archivedSnapshot);
+    const result = await listClasses(
+      { __fake: true } as any,
+      'teacher-1',
+      { collection, getDocs } as any,
+      { includeArchived: true },
+    );
+    expect(result.map((c) => c.id)).toEqual(['class-a', 'class-z']);
+    expect(result.find((c) => c.id === 'class-z')?.archived).toBe(true);
+  });
 });
