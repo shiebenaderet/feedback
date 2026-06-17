@@ -8,6 +8,7 @@ import { getOrCreateCurrentYear } from '../data/years';
 import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
+import { NavBar } from '../components/NavBar';
 import { rosterProgress } from '../compose/rosterProgress';
 import { nextStudentIndex } from '../compose/nextStudentIndex';
 import type { ClassMeta, MessageDraft } from '../types';
@@ -130,8 +131,10 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const classMeta: ClassMeta = { id: data.period.id, name: data.period.label };
 
   return (
-    <main>
-      <h1>Write feedback · {data.period.label}</h1>
+    <>
+      <NavBar />
+      <main>
+        <h1>Write feedback · {data.period.label}</h1>
 
       <label htmlFor="shared-header">Shared header (top of every message)</label>
       <textarea
@@ -182,6 +185,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
 
       {/* Compose → Review handoff. */}
       <Link to={`/review/${batchId}`}>Review & send →</Link>
-    </main>
+      </main>
+    </>
   );
 }

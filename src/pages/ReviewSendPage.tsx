@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { NavBar } from '../components/NavBar';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { getBatch, setBatchStatus, updateBatch } from '../firebase/batches';
@@ -150,25 +151,32 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
     );
 
   return (
-    <main>
-      <h1>Review & send · {batch.sharedHeader}</h1>
+    <>
+      <NavBar />
+      <main>
+        <h1>Review & send · {batch.sharedHeader}</h1>
 
-      <GradingPeriodChooser
-        gradingPeriod={gp.gradingPeriod}
-        label={gp.label}
-        onChange={onGpChange}
-      />
+        <GradingPeriodChooser
+          gradingPeriod={gp.gradingPeriod}
+          label={gp.label}
+          onChange={onGpChange}
+        />
 
-      <ReviewScreenContainer
-        batch={batch}
-        messages={messages}
-        mode={mode}
-        runSend={runSend}
-        setBatchStatus={(status) =>
-          api.setBatchStatus(db, uid, batchId, status as 'sending' | 'sent')
-        }
-        onSent={onSent}
-      />
-    </main>
+        <ReviewScreenContainer
+          batch={batch}
+          messages={messages}
+          mode={mode}
+          runSend={runSend}
+          setBatchStatus={(status) =>
+            api.setBatchStatus(db, uid, batchId, status as 'sending' | 'sent')
+          }
+          onSent={onSent}
+        />
+
+        <p style={{ marginTop: 24 }}>
+          <Link to="/home">← Back to Home</Link>
+        </p>
+      </main>
+    </>
   );
 }

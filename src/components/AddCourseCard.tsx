@@ -30,6 +30,7 @@ export function AddCourseCard({ onCreate }: AddCourseCardProps) {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const [customDraft, setCustomDraft] = useState('');
   const [customPeriods, setCustomPeriods] = useState<string[]>([]);
+  const [periodError, setPeriodError] = useState(false);
 
   function toggle(n: number) {
     setChecked((prev) => ({ ...prev, [n]: !prev[n] }));
@@ -54,7 +55,14 @@ export function AddCourseCard({ onCreate }: AddCourseCardProps) {
       label,
       order: STANDARD_PERIODS.length + 1 + i,
     }));
-    onCreate({ name: name.trim(), periods: [...standard, ...custom] });
+    const periods = [...standard, ...custom];
+    // A course with zero periods is a dead end on Home — require at least one.
+    if (periods.length === 0) {
+      setPeriodError(true);
+      return;
+    }
+    setPeriodError(false);
+    onCreate({ name: name.trim(), periods });
     setName('');
     setChecked({});
     setCustomPeriods([]);
@@ -100,6 +108,12 @@ export function AddCourseCard({ onCreate }: AddCourseCardProps) {
             <li key={`${label}-${i}`}>{label}</li>
           ))}
         </ul>
+      )}
+
+      {periodError && (
+        <p role="alert" style={{ margin: 0, color: tokens.color.danger, fontSize: 14 }}>
+          Pick at least one period for this course.
+        </p>
       )}
 
       <button type="submit" style={tealButtonStyle()}>
