@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "comment": "ComposePage resume: findDraftBatch filters batches by periodId + status.",
+      "collectionGroup": "batches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "periodId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "comment": "HomePage per-period progress: listFeedbackHistory filters ownerUid + yearId + courseId + periodId on the feedbackHistory collection group.",
       "collectionGroup": "feedbackHistory",
       "queryScope": "COLLECTION_GROUP",

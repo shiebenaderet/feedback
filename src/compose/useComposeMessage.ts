@@ -6,6 +6,8 @@ export interface UseComposeMessageArgs {
   student: Student;
   classMeta: ClassMeta;
   allEntries: BankEntry[];
+  /** Restores a previously-saved draft (resumed batch) so reloads don't lose work. */
+  initial?: { usedEntries?: string[]; slotValues?: Record<string, string> };
 }
 
 export interface UseComposeMessageResult {
@@ -22,9 +24,10 @@ export function useComposeMessage({
   student,
   classMeta,
   allEntries,
+  initial,
 }: UseComposeMessageArgs): UseComposeMessageResult {
-  const [usedEntries, setUsedEntries] = useState<string[]>([]);
-  const [slotValues, setSlotValues] = useState<Record<string, string>>({});
+  const [usedEntries, setUsedEntries] = useState<string[]>(initial?.usedEntries ?? []);
+  const [slotValues, setSlotValues] = useState<Record<string, string>>(initial?.slotValues ?? {});
 
   const byId = useMemo(() => {
     const m = new Map<string, BankEntry>();

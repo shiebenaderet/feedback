@@ -13,6 +13,8 @@ export interface ComposeScreenProps {
   entries: BankEntry[];
   /** Debounced persistence sink — caller wires this to saveMessageDraft. */
   onAutoSave: (batchId: string, draft: MessageDraft) => void;
+  /** A previously-saved draft for this student (resumed batch), restored on mount. */
+  initialDraft?: { usedEntries?: string[]; slotValues?: Record<string, string> };
   debounceMs?: number;
 }
 
@@ -22,9 +24,15 @@ export function ComposeScreen({
   classMeta,
   entries,
   onAutoSave,
+  initialDraft,
   debounceMs = 800,
 }: ComposeScreenProps) {
-  const compose = useComposeMessage({ student, classMeta, allEntries: entries });
+  const compose = useComposeMessage({
+    student,
+    classMeta,
+    allEntries: entries,
+    initial: initialDraft,
+  });
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   const typeOptions = deriveTypeOptions(entries);
