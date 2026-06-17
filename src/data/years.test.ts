@@ -54,4 +54,31 @@ describe('getOrCreateCurrentYear', () => {
     expect(yearId).toBe('year-new');
     expect(addDoc).toHaveBeenCalledWith({ __path: `teachers/${uid}/years` }, { label: '2026–2027' });
   });
+
+  it('resolves DUPLICATE years (same label) deterministically — always the smallest id, never a new one', async () => {
+    const uid = 'teacher-1';
+    const db = { __fake: true };
+    const collection = vi.fn((_db: unknown, path: string) => ({ __path: path }));
+    // Firestore returns docs in an UNSPECIFIED order; simulate the dangerous case.
+    const getDocs = vi.fn(async () => ({
+      docs: [
+        { id: 'year-zzz', data: () => ({ label: '2025–2026' }) },
+        { id: 'year-aaa', data: () => ({ label: '2025–2026' }) },
+        { id: 'other', data: () => ({ label: '2024–2025' }) },
+      ],
+    }));
+    const addDoc = vi.fn();
+
+    const first = await getOrCreateCurrentYear(db as any, uid, '2025–2026', {
+      collection, getDocs, addDoc,
+    } as any);
+    const second = await getOrCreateCurrentYear(db as any, uid, '2025–2026', {
+      collection, getDocs, addDoc,
+    } as any);
+
+    // Every call lands on the SAME year (smallest id) so courses never strand.
+    expect(first).toBe('year-aaa');
+    expect(second).toBe('year-aaa');
+    expect(addDoc).not.toHaveBeenCalled();
+  });
 });
