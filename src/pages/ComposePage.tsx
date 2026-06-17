@@ -216,15 +216,23 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           />
         </label>
 
-        <div style={{ display: 'flex', gap: tokens.space(2), alignItems: 'flex-start' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '230px minmax(0, 1fr)',
+            gap: tokens.space(2),
+            alignItems: 'start',
+          }}
+        >
           <nav
             aria-label="Roster"
             style={{
               ...cardStyle(),
-              flex: '0 0 220px',
               padding: tokens.space(2),
-              maxHeight: 640,
+              maxHeight: 'calc(100vh - 220px)',
               overflowY: 'auto',
+              position: 'sticky',
+              top: tokens.space(2),
             }}
           >
             <p
@@ -278,7 +286,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           </nav>
 
         {student && (
-          <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: tokens.space(2) }}>
+          <div style={{ minWidth: 0, display: 'grid', gap: tokens.space(2) }}>
             <ComposeScreen
               key={student.id}
               batchId={batchId}
