@@ -54,33 +54,45 @@ export async function resolveActiveYear(
   uid: string,
   deps: ResolveActiveYearDeps = defaultDeps,
 ): Promise<string> {
-  const hasCourses = async (yearId: string): Promise<boolean> => {
-    const cs = await deps.listCourses(db, uid, yearId, undefined, { includeArchived: true });
-    return cs.length > 0;
+  const courseCount = async (yearId: string): Promise<number> => {
+    try {
+      const cs = await deps.listCourses(db, uid, yearId, undefined, { includeArchived: true });
+      return cs.length;
+    } catch {
+      return 0;
+    }
   };
 
-  // 1. Honor the stored working year if it still has courses.
+  // 1. Honor the stored working year ONLY if it still has courses. A stale
+  //    pointer (e.g. to an empty duplicate year from earlier) is ignored.
   const stored = deps.readStoredYearId(uid);
-  if (stored && (await hasCourses(stored))) return stored;
+  if (stored && (await courseCount(stored)) > 0) return stored;
 
-  // 2. The current (clock) year — fine if it has courses or is genuinely new.
+  // Ensure the current clock-year doc exists (creates it if brand new).
   const currentId = await deps.getOrCreateCurrentYear(db, uid, currentSchoolYearLabel());
-  if (await hasCourses(currentId)) {
-    deps.storeYearId(uid, currentId);
-    return currentId;
-  }
 
-  // 3. Rollover fallback: the most recent OTHER year that has courses.
-  const years = await deps.listYears(db, uid);
+  // 2. Pick the year that ACTUALLY HAS THE MOST COURSES. This is robust against
+  //    duplicate year docs (same label, different ids) where the courses live in
+  //    one and the clock-resolver returns another empty one — we always land on
+  //    the populated year, never a blank duplicate. Ties go to the current year,
+  //    then to the most recent label.
+  const years = await deps.listYears(db, uid); // newest-label-first
+  let best: { id: string; count: number } | null = null;
   for (const y of years) {
-    if (y.id === currentId) continue;
-    if (await hasCourses(y.id)) {
-      deps.storeYearId(uid, y.id);
-      return y.id;
-    }
+    const count = await courseCount(y.id);
+    if (count === 0) continue;
+    const isBetter =
+      best === null ||
+      count > best.count ||
+      (count === best.count && y.id === currentId);
+    if (isBetter) best = { id: y.id, count };
+  }
+  if (best) {
+    deps.storeYearId(uid, best.id);
+    return best.id;
   }
 
-  // Nothing populated anywhere — use (and remember) the current year.
+  // 3. Nothing populated anywhere (fresh teacher) — use the current year.
   deps.storeYearId(uid, currentId);
   return currentId;
 }
