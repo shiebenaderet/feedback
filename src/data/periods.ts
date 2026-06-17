@@ -5,7 +5,6 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import type { Period } from '../types';
-import { GRADING_PERIODS, type GradingPeriod } from '../feedback/taxonomy';
 
 const periodsPath = (uid: string, yearId: string, courseId: string) =>
   `teachers/${uid}/years/${yearId}/courses/${courseId}/periods`;
@@ -21,17 +20,18 @@ const defaultWriteDeps: PeriodWriteDeps = {
   addDoc: fbAddDoc,
 };
 
-/** A new period: a grading-period label plus its position in the year. */
+/** A new class period: a free-form label ("Period 1", "Block A") plus its order. */
 export interface NewPeriodInput {
   label: string;
   order: number;
 }
 
 /**
- * Create ONE period under a course (callers loop over the checked grading
- * periods). The label MUST be one of GRADING_PERIODS — the valid set lives in
- * the taxonomy config, never hardcoded here — so an unknown label is rejected
- * before any write reaches Firestore. Returns the new period id.
+ * Create ONE class period under a course (callers loop over the checked
+ * periods). A class period is a timetable section — "Period 1", "Block A",
+ * "1st hour" — so its label is free-form user text, NOT a fixed vocabulary.
+ * (Grading periods like Q1/Q2 are a separate axis chosen per send batch.)
+ * Returns the new period id.
  */
 export async function createPeriod(
   db: Firestore,
@@ -41,12 +41,9 @@ export async function createPeriod(
   input: NewPeriodInput,
   deps: PeriodWriteDeps = defaultWriteDeps,
 ): Promise<string> {
-  if (!(GRADING_PERIODS as readonly string[]).includes(input.label)) {
-    throw new Error(`Unknown grading period label: ${input.label}`);
-  }
   const { collection, addDoc } = deps;
   const ref = collection(db, periodsPath(uid, yearId, courseId));
-  const docRef = await addDoc(ref, { label: input.label as GradingPeriod, order: input.order });
+  const docRef = await addDoc(ref, { label: input.label, order: input.order });
   return docRef.id;
 }
 
@@ -62,8 +59,8 @@ const defaultReadDeps: PeriodReadDeps = {
 };
 
 /**
- * List a course's periods as Period[], sorted ascending by `order` so callers
- * render them in grading-period sequence.
+ * List a course's class periods as Period[], sorted ascending by `order` so
+ * callers render them in timetable sequence.
  */
 export async function listPeriods(
   db: Firestore,
