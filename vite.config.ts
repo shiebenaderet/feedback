@@ -23,6 +23,7 @@ export default defineConfig({
       'src/bank/bankRules.test.ts',
       'src/firebase/batches.test.ts',
       'src/firebase/messages.test.ts',
+      'src/firebase/rulesRedesign.test.ts',
     ],
   },
 });
