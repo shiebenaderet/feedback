@@ -28,7 +28,11 @@ export function ComposeScreen({
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   const typeOptions = deriveTypeOptions(entries);
-  const visibleEntries = filterEntriesByType(entries, typeFilter);
+  // Slot-free (generic) comments first — they're the fast picks for a full
+  // roster; the personalized {slot} templates sink below.
+  const visibleEntries = [...filterEntriesByType(entries, typeFilter)].sort(
+    (a, b) => a.slots.length - b.slots.length,
+  );
 
   // Debounced auto-save: fire only after the user has touched the message
   // (skip the initial empty stub so we never persist usedEntries:[]/slotValues:{}).
@@ -76,7 +80,12 @@ export function ComposeScreen({
   return (
     <div
       className="compose-screen"
-      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: tokens.space(2) }}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(360px, 1fr)',
+        gap: tokens.space(2),
+        alignItems: 'start',
+      }}
     >
       {/* MIDDLE: the message being composed */}
       <div className="compose-builder" style={{ ...cardStyle(), minWidth: 0 }}>

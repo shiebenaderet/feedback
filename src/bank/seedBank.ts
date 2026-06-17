@@ -105,6 +105,204 @@ export const SEED_BANK: BankEntry[] = [
     "{name}, you came prepared — materials out, assignment ready, focused from the bell. That self-management is a skill, and you've clearly worked at it.",
     { type: 'skill', area: 'professionalism', objective: 'self-management', tone: 'warm' },
   ),
+
+  // ============================================================
+  // GENERIC, slot-free comments — fast to use across a whole roster.
+  // Each area has STRENGTH (type: success) and GROWTH (type: growth) versions.
+  // No {tokens}, so they drop straight in with nothing to fill.
+  // ============================================================
+
+  // ---- Class contributions ----
+  entry(
+    'gen-contribution-success-1',
+    'You were a consistent, thoughtful contributor to our class this quarter. When you share your thinking, it raises the level of the whole room — keep it up.',
+    { type: 'success', area: 'contribution', objective: 'participation', tone: 'warm' },
+  ),
+  entry(
+    'gen-contribution-success-2',
+    'Thank you for the energy you bring to class. You volunteer your ideas, build on what others say, and help our discussions actually go somewhere.',
+    { type: 'success', area: 'contribution', objective: 'participation', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-contribution-success-3',
+    'Your voice matters in this class. You speak up when it counts and your comments are almost always worth the room stopping to think about.',
+    { type: 'success', area: 'contribution', objective: 'participation', tone: 'warm' },
+  ),
+  entry(
+    'gen-contribution-growth-1',
+    "A goal going forward: share your thinking out loud more often. You clearly have ideas worth hearing, and the class is better when you put them on the table — don't wait to be called on.",
+    { type: 'growth', area: 'contribution', objective: 'participation', tone: 'direct' },
+  ),
+  entry(
+    'gen-contribution-growth-2',
+    "One next step is to contribute a little earlier in our discussions. When you do jump in your points land well, so I'd love to hear from you sooner rather than at the very end.",
+    { type: 'growth', area: 'contribution', objective: 'participation', tone: 'warm' },
+  ),
+  entry(
+    'gen-contribution-growth-3',
+    'To grow as a contributor, try aiming for one solid comment or question every class. You have the ideas — building the habit of sharing them will make you a leader in discussions.',
+    { type: 'growth', area: 'contribution', objective: 'participation', tone: 'encouraging' },
+  ),
+
+  // ---- Attitude ----
+  entry(
+    'gen-attitude-success-1',
+    'Your attitude this quarter was a real strength. You showed up ready to learn, stayed positive even on the hard days, and made this a better class to be part of.',
+    { type: 'success', area: 'attitude', objective: 'mindset', tone: 'warm' },
+  ),
+  entry(
+    'gen-attitude-success-2',
+    'I appreciate the positive energy you bring. You take feedback well, you keep an open mind, and you treat new challenges as something to figure out rather than something to avoid.',
+    { type: 'success', area: 'attitude', objective: 'mindset', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-attitude-success-3',
+    "You have a great learning attitude — curious, willing to be wrong, and quick to bounce back. That mindset will take you a long way, in this class and beyond.",
+    { type: 'success', area: 'attitude', objective: 'mindset', tone: 'warm' },
+  ),
+  entry(
+    'gen-attitude-growth-1',
+    "A goal for next quarter: bring your best attitude even when the work feels hard or boring. You're at your best when you stay open — try to hold onto that energy on the tough days too.",
+    { type: 'growth', area: 'attitude', objective: 'mindset', tone: 'direct' },
+  ),
+  entry(
+    'gen-attitude-growth-2',
+    'One thing to work on is treating setbacks as part of learning rather than a reason to shut down. When something is frustrating, take a breath and stay in it — that resilience is a skill worth building.',
+    { type: 'growth', area: 'attitude', objective: 'mindset', tone: 'warm' },
+  ),
+  entry(
+    'gen-attitude-growth-3',
+    "To grow, keep working on staying focused and engaged from the start of class. You do great work when you're locked in — the goal is to get there a little faster each day.",
+    { type: 'growth', area: 'attitude', objective: 'focus', tone: 'encouraging' },
+  ),
+
+  // ---- Working with others ----
+  entry(
+    'gen-collaboration-success-1',
+    'You work really well with others. You listen, you share the load, and your group can count on you to do your part — that reliability matters more than you know.',
+    { type: 'success', area: 'collaboration', objective: 'teamwork', tone: 'warm' },
+  ),
+  entry(
+    'gen-collaboration-success-2',
+    'You make the people around you better. In group work you include everyone, keep your team on track, and handle disagreements with respect.',
+    { type: 'success', area: 'collaboration', objective: 'teamwork', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-collaboration-success-3',
+    'You are a teammate others want to work with. You bring ideas without taking over, and you give your group members room to contribute too.',
+    { type: 'success', area: 'collaboration', objective: 'teamwork', tone: 'warm' },
+  ),
+  entry(
+    'gen-collaboration-growth-1',
+    'A next step in group work is to trust your own voice a little more. You have good ideas — sharing them sooner with your team will make you a leader, not just a contributor.',
+    { type: 'growth', area: 'collaboration', objective: 'leadership', tone: 'warm' },
+  ),
+  entry(
+    'gen-collaboration-growth-2',
+    "One goal is to make sure everyone in your group gets a turn. You have strong ideas, and the best collaborators pull others in instead of carrying the whole thing themselves.",
+    { type: 'growth', area: 'collaboration', objective: 'teamwork', tone: 'direct' },
+  ),
+  entry(
+    'gen-collaboration-growth-3',
+    'To grow as a teammate, work on staying patient when a group moves slower than you would. Helping others get there — not just getting there first — is what real leadership looks like.',
+    { type: 'growth', area: 'collaboration', objective: 'leadership', tone: 'encouraging' },
+  ),
+
+  // ---- Asking great questions ----
+  entry(
+    'gen-questions-success-1',
+    'You ask genuinely great questions. The kind that make the whole class think harder and often take our discussion somewhere better than I had planned.',
+    { type: 'success', area: 'questions', objective: 'curiosity', tone: 'warm' },
+  ),
+  entry(
+    'gen-questions-success-2',
+    "Your curiosity is a real strength. You're not satisfied with the surface answer — you dig for the why, and that pushes everyone's thinking forward.",
+    { type: 'success', area: 'questions', objective: 'curiosity', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-questions-success-3',
+    "I love that you ask questions when something doesn't add up. That takes courage and it's exactly how strong thinkers learn — never lose that.",
+    { type: 'success', area: 'questions', objective: 'curiosity', tone: 'warm' },
+  ),
+  entry(
+    'gen-questions-growth-1',
+    "A goal going forward: ask more of the questions you're already wondering about. When you're confused or curious, say so — your questions are usually ones other students have too.",
+    { type: 'growth', area: 'questions', objective: 'curiosity', tone: 'direct' },
+  ),
+  entry(
+    'gen-questions-growth-2',
+    "One next step is to push past your first question to a deeper one. You ask good 'what' questions — challenge yourself to ask 'why' and 'what if' more often.",
+    { type: 'growth', area: 'questions', objective: 'curiosity', tone: 'warm' },
+  ),
+  entry(
+    'gen-questions-growth-3',
+    "To grow, try asking a question when you're stuck instead of waiting it out. Asking for help early isn't a weakness — the students who ask are the ones who grow the fastest.",
+    { type: 'growth', area: 'questions', objective: 'self-advocacy', tone: 'encouraging' },
+  ),
+
+  // ---- Pushing through challenges ----
+  entry(
+    'gen-perseverance-success-1',
+    "You don't give up when the work gets hard, and that's one of the most important things I can say about a student. You push through, and your effort shows in your growth.",
+    { type: 'success', area: 'perseverance', objective: 'effort', tone: 'warm' },
+  ),
+  entry(
+    'gen-perseverance-success-2',
+    'I watched you stick with tough problems this quarter instead of quitting. That persistence — trying again, asking for help, keeping at it — is exactly what learning takes.',
+    { type: 'success', area: 'perseverance', objective: 'effort', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-perseverance-success-3',
+    'Your grit really stands out. When something is challenging you slow down and work through it rather than shutting down, and that habit will serve you for the rest of your life.',
+    { type: 'success', area: 'perseverance', objective: 'effort', tone: 'warm' },
+  ),
+  entry(
+    'gen-perseverance-growth-1',
+    "A goal for you is to keep going when the work gets frustrating instead of stepping back. You're capable of more than you think — the breakthrough usually comes right after the hard part.",
+    { type: 'growth', area: 'perseverance', objective: 'effort', tone: 'direct' },
+  ),
+  entry(
+    'gen-perseverance-growth-2',
+    "One next step is to try a tough task a second way before deciding it's too hard. You have the ability — building the habit of pushing through is what will unlock it.",
+    { type: 'growth', area: 'perseverance', objective: 'effort', tone: 'warm' },
+  ),
+  entry(
+    'gen-perseverance-growth-3',
+    'To grow, work on asking for help as a tool rather than giving up when you hit a wall. Persistence and reaching out go together — the strongest students do both.',
+    { type: 'growth', area: 'perseverance', objective: 'self-advocacy', tone: 'encouraging' },
+  ),
+
+  // ---- Next year / high school readiness (a strength now + a goal for high school) ----
+  entry(
+    'gen-readiness-success-1',
+    "One of my favorite things about you is the smile and good attitude you bring through the door every single day — never underestimate how much that lifts a room. Carry it into high school and you'll make it a better place too.",
+    { type: 'success', area: 'readiness', objective: 'presence', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-success-2',
+    "You showed up on time, ready, and dependable all year — that consistency is a real strength. It's exactly the habit that will set you apart in high school, so hold onto it.",
+    { type: 'success', area: 'readiness', objective: 'consistency', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-readiness-success-3',
+    'You treat people with kindness and respect, and that matters more than any grade. As you head to high school, keep being someone others can count on to do the right thing.',
+    { type: 'success', area: 'readiness', objective: 'character', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-growth-1',
+    "A goal for high school: keep building the habit of advocating for yourself — asking for help, talking to teachers, and speaking up when you need something. You're ready for it, and it's the skill that unlocks everything else.",
+    { type: 'growth', area: 'readiness', objective: 'self-advocacy', tone: 'direct' },
+  ),
+  entry(
+    'gen-readiness-growth-2',
+    "As you move on to high school, work on staying organized and managing your time as the workload grows. You have the ability — strong systems for tracking your work will let it shine.",
+    { type: 'growth', area: 'readiness', objective: 'organization', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-growth-3',
+    'My hope for you in high school is that you keep taking on challenges that stretch you instead of playing it safe. You grow the most when you reach a little past comfortable — go find those moments.',
+    { type: 'growth', area: 'readiness', objective: 'challenge', tone: 'encouraging' },
+  ),
 ];
 
 // Stable identity for idempotent install: the entry's own id.
