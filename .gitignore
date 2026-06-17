@@ -4,3 +4,7 @@ node_modules/
 dist/
 .env.local
 .env
+
+# Build artifacts (transpiled / incremental caches — regenerated, not source)
+*.tsbuildinfo
+vite.config.js
