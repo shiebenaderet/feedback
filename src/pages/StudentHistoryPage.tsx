@@ -6,7 +6,7 @@ import { NavBar } from '../components/NavBar';
 import { listStudentHistory } from '../data/listStudentHistory';
 import { summarizeHistoryEntry } from '../feedback/summarizeHistoryEntry';
 import type { FeedbackHistoryEntry } from '../types';
-import { tokens, panelStyle } from '../ui/theme';
+import { tokens, cardStyle, periodChipStyle } from '../ui/theme';
 
 export interface StudentHistoryPageDeps {
   uid: string;
@@ -61,11 +61,19 @@ export function StudentHistoryPage({ deps }: { deps?: Partial<StudentHistoryPage
         )}
         <div style={{ display: 'grid', gap: tokens.space(2) }}>
           {(entries ?? []).map((e) => (
-            <article key={e.id} style={panelStyle()}>
+            <article key={e.id} style={cardStyle()}>
               <div
-                style={{ color: tokens.color.teal, fontSize: 13, marginBottom: tokens.space(1) }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: tokens.space(1),
+                  marginBottom: tokens.space(1),
+                }}
               >
-                {summarizeHistoryEntry(e)}
+                <span style={periodChipStyle(true)}>{e.gradingPeriod}</span>
+                <span style={{ color: tokens.color.muted, fontSize: 13 }}>
+                  {summarizeHistoryEntry(e)}
+                </span>
               </div>
               <p style={{ margin: 0, color: tokens.color.text, whiteSpace: 'pre-wrap' }}>
                 {e.finalText}

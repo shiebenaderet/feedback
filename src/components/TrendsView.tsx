@@ -1,6 +1,6 @@
 import type { TrendsSummary } from '../feedback/aggregateTrends';
 import { GRADING_PERIODS } from '../feedback/taxonomy';
-import { tokens, panelStyle } from '../ui/theme';
+import { tokens, cardStyle, periodChipStyle } from '../ui/theme';
 
 export interface TrendsViewProps {
   summary: TrendsSummary;
@@ -21,7 +21,7 @@ export function TrendsView({ summary }: TrendsViewProps) {
         {summary.total} pieces of feedback
       </p>
 
-      <section role="region" aria-label="Top growth areas" style={panelStyle()}>
+      <section role="region" aria-label="Top growth areas" style={cardStyle()}>
         <h2 style={{ fontSize: 15, marginTop: 0 }}>Top growth areas</h2>
         <ul
           style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: tokens.space(1) }}
@@ -34,7 +34,7 @@ export function TrendsView({ summary }: TrendsViewProps) {
         </ul>
       </section>
 
-      <section role="region" aria-label="Strength / growth balance" style={panelStyle()}>
+      <section role="region" aria-label="Strength / growth balance" style={cardStyle()}>
         <h2 style={{ fontSize: 15, marginTop: 0 }}>Strength / growth balance</h2>
         <div style={{ display: 'flex', gap: tokens.space(3) }}>
           <span>
@@ -50,14 +50,18 @@ export function TrendsView({ summary }: TrendsViewProps) {
         </div>
       </section>
 
-      <section role="region" aria-label="By grading period" style={panelStyle()}>
+      <section role="region" aria-label="By grading period" style={cardStyle()}>
         <h2 style={{ fontSize: 15, marginTop: 0 }}>By grading period</h2>
         <ul
           style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: tokens.space(2) }}
         >
           {periods.map((p) => (
-            <li key={p} style={{ color: tokens.color.text }}>
-              {p}: <strong>{summary.byGradingPeriod[p]}</strong>
+            <li
+              key={p}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: tokens.color.text }}
+            >
+              <span style={periodChipStyle(true)}>{p}</span>
+              <strong>{summary.byGradingPeriod[p]}</strong>
             </li>
           ))}
         </ul>
