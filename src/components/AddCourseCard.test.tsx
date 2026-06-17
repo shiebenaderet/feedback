@@ -52,4 +52,15 @@ describe('AddCourseCard', () => {
     fireEvent.click(screen.getByRole('button', { name: /add course/i }));
     expect(onCreate).not.toHaveBeenCalled();
   });
+
+  it('does not submit without at least one period, and explains why', () => {
+    const onCreate = vi.fn();
+    render(<AddCourseCard onCreate={onCreate} />);
+    fireEvent.change(screen.getByLabelText('Course name'), {
+      target: { value: 'Social Studies 8' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /add course/i }));
+    expect(onCreate).not.toHaveBeenCalled();
+    expect(screen.getByText(/at least one period/i)).toBeInTheDocument();
+  });
 });
