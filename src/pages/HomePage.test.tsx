@@ -60,6 +60,25 @@ describe('HomePage', () => {
     await waitFor(() => expect(screen.getByText('1 / 3')).toBeInTheDocument());
   });
 
+  it('still renders the dashboard when the feedback-history read fails (degrades to 0 done)', async () => {
+    const deps = {
+      ...makeDeps(),
+      // Simulates a missing composite index / permission hiccup on the history read.
+      listFeedbackHistory: vi.fn(async () => {
+        throw new Error('failed-precondition: index required');
+      }),
+    };
+    render(
+      <MemoryRouter>
+        <HomePage deps={deps} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Biology')).toBeInTheDocument();
+    // The card survives: progress shows 0 of 3 rather than the whole page erroring.
+    await waitFor(() => expect(screen.getByText('0 / 3')).toBeInTheDocument());
+    expect(screen.queryByText(/could not load your courses/i)).toBeNull();
+  });
+
   it('links a populated period to its Roster and Write feedback', async () => {
     render(
       <MemoryRouter>

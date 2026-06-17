@@ -92,11 +92,19 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
             const rows = await Promise.all(
               periods.map(async (p) => {
                 const total = await api.rosterSize(db, uid, yearId, course.id, p.id);
-                const history = await api.listFeedbackHistory(db, uid, {
-                  yearId,
-                  courseId: course.id,
-                  periodId: p.id,
-                });
+                // The history read is a collection-group query that needs a
+                // composite index; if it isn't ready (or errors), the dashboard
+                // must still render — degrade this period's progress to 0 done.
+                let history: FeedbackHistoryEntry[] = [];
+                try {
+                  history = await api.listFeedbackHistory(db, uid, {
+                    yearId,
+                    courseId: course.id,
+                    periodId: p.id,
+                  });
+                } catch {
+                  history = [];
+                }
                 const { done } = periodFeedbackProgress(total, history, gradingPeriod);
                 return { ...p, done, total };
               }),

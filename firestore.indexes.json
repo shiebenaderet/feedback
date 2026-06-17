@@ -1,0 +1,63 @@
+{
+  "indexes": [
+    {
+      "comment": "HomePage per-period progress: listFeedbackHistory filters ownerUid + yearId + courseId + periodId on the feedbackHistory collection group.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "yearId", "order": "ASCENDING" },
+        { "fieldPath": "courseId", "order": "ASCENDING" },
+        { "fieldPath": "periodId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "Year/course-scoped history: ownerUid + yearId + courseId.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "yearId", "order": "ASCENDING" },
+        { "fieldPath": "courseId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "Whole-year history: ownerUid + yearId.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "yearId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "Per-student history with chronological order: ownerUid + yearId + courseId + periodId + studentId.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "yearId", "order": "ASCENDING" },
+        { "fieldPath": "courseId", "order": "ASCENDING" },
+        { "fieldPath": "periodId", "order": "ASCENDING" },
+        { "fieldPath": "studentId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "TrendsPage period rollup: listPeriodHistory filters periodId on the collection group.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "periodId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "TrendsPage course rollup: listCourseHistory filters courseId on the collection group.",
+      "collectionGroup": "feedbackHistory",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "courseId", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
