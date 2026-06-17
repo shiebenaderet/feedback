@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { createBatch, updateBatch } from '../firebase/batches';
 import { saveMessageDraft } from '../firebase/messages';
+import { getOrCreateCurrentYear } from '../data/years';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
 import { rosterProgress } from '../compose/rosterProgress';
@@ -13,6 +14,8 @@ import { tokens } from '../ui/theme';
 
 export interface ComposePageDeps {
   uid: string;
+  /** Resolves the active year id; the test injects a fixed id. */
+  resolveYearId: (db: typeof import('../firebase/config').db, uid: string) => Promise<string>;
   loadComposeData: typeof loadComposeData;
   createBatch: typeof createBatch;
   updateBatch: typeof updateBatch;
@@ -20,10 +23,11 @@ export interface ComposePageDeps {
 }
 
 export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
-  const { classId = '' } = useParams();
+  const { courseId = '', periodId = '' } = useParams();
   const { user } = useAuth();
   const uid = deps?.uid ?? user?.uid ?? '';
   const api = {
+    resolveYearId: deps?.resolveYearId ?? ((d, u) => getOrCreateCurrentYear(d, u, '')),
     loadComposeData: deps?.loadComposeData ?? loadComposeData,
     createBatch: deps?.createBatch ?? createBatch,
     updateBatch: deps?.updateBatch ?? updateBatch,
@@ -42,36 +46,37 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const headerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!uid || !classId) return;
+    if (!uid || !courseId || !periodId) return;
     let alive = true;
-    api
-      .loadComposeData(db, uid, classId)
+    (async () => {
+      // The compose target needs the active year (injectable for tests).
+      const yearId = await api.resolveYearId(db, uid);
+      if (!alive) return undefined;
+      return api.loadComposeData(db, uid, { yearId, courseId, periodId });
+    })()
       .then((d) => {
-        if (!alive) return;
+        if (!d || !alive) return;
         setData(d);
         if (!batchStarted.current) {
           batchStarted.current = true;
-          // Phase 4 re-points this page to the year/course/period route and passes
-          // the real tree ids. Transitionally, the route's id stands in for all three
-          // so createBatch (now tree-keyed) compiles and the old route keeps working.
           api
             .createBatch(db, uid, {
-              yearId: classId,
-              courseId: classId,
-              periodId: classId,
+              periodId,
+              courseId: d.courseId,
+              yearId: d.yearId,
               sharedHeader: '',
             })
             .then((id) => {
-            if (alive) setBatchId(id);
-          });
+              if (alive) setBatchId(id);
+            });
         }
       })
-      .catch(() => alive && setError('Could not load this class.'));
+      .catch(() => alive && setError('Could not load this period.'));
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, classId]);
+  }, [uid, courseId, periodId]);
 
   // Persist the shared header to the batch (debounced) so it isn't lost at review.
   const onHeaderChange = useCallback(
@@ -119,9 +124,12 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
     })),
   );
 
+  // ComposeScreen's classMeta is the slot-fill context; the period stands in for it.
+  const classMeta: ClassMeta = { id: data.period.id, name: data.period.label };
+
   return (
     <main>
-      <h1>Write feedback · {data.classMeta.name}</h1>
+      <h1>Write feedback · {data.period.label}</h1>
 
       <label htmlFor="shared-header">Shared header (top of every message)</label>
       <textarea
@@ -156,7 +164,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
             key={student.id}
             batchId={batchId}
             student={student}
-            classMeta={data.classMeta as ClassMeta}
+            classMeta={classMeta}
             entries={data.entries}
             onAutoSave={onAutoSave}
           />
@@ -167,11 +175,11 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         type="button"
         onClick={() => setIndex((i) => nextStudentIndex(i, data.students.length))}
       >
-        Save &amp; next
+        Save & next
       </button>
 
-      {/* Compose → Review handoff (critic fix: the flow had no UI path out). */}
-      <Link to={`/review/${batchId}`}>Review &amp; send →</Link>
+      {/* Compose → Review handoff. */}
+      <Link to={`/review/${batchId}`}>Review & send →</Link>
     </main>
   );
 }
