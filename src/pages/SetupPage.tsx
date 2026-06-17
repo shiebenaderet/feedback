@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { db } from '../firebase/config';
 import { resolveActiveYear } from '../data/activeYear';
+import { getOrCreateCurrentYear } from '../data/years';
+import { currentSchoolYearLabel } from '../data/currentSchoolYearLabel';
 import { listCourses } from '../data/courses';
 import { createCourse } from '../data/courses';
 import { createPeriod } from '../data/periods';
@@ -24,6 +26,8 @@ export interface SetupPageDeps {
   renameCourse: typeof renameCourse;
   archiveCourse: typeof archiveCourse;
   deleteCourse: typeof deleteCourse;
+  /** Resolves the CURRENT clock year for course creation (injectable for tests). */
+  resolveCreateYearId: (db: unknown, uid: string) => Promise<string>;
 }
 
 export function SetupPage({ deps }: { deps?: Partial<SetupPageDeps> }) {
@@ -36,6 +40,10 @@ export function SetupPage({ deps }: { deps?: Partial<SetupPageDeps> }) {
     renameCourse: deps?.renameCourse ?? renameCourse,
     archiveCourse: deps?.archiveCourse ?? archiveCourse,
     deleteCourse: deps?.deleteCourse ?? deleteCourse,
+    resolveCreateYearId:
+      deps?.resolveCreateYearId ??
+      ((d: unknown, u: string) =>
+        getOrCreateCurrentYear(d as Parameters<typeof getOrCreateCurrentYear>[0], u, currentSchoolYearLabel())),
   };
 
   const [yearId, setYearId] = useState<string>(deps?.yearId ?? '');
@@ -68,11 +76,17 @@ export function SetupPage({ deps }: { deps?: Partial<SetupPageDeps> }) {
   async function handleCreateCourse(input: NewCourseInput) {
     setError(null);
     try {
-      const courseId = await api.createCourse(db, uid, yearId, input.name);
+      // Always create into the CURRENT school year (clock-derived), even if the
+      // view is showing a prior year right after the August rollover — otherwise
+      // new courses would pile into last year. Then point the view at it so the
+      // new course is immediately visible.
+      const createYearId = await api.resolveCreateYearId(db, uid);
+      const courseId = await api.createCourse(db, uid, createYearId, input.name);
       for (const p of input.periods) {
-        await api.createPeriod(db, uid, yearId, courseId, { label: p.label, order: p.order });
+        await api.createPeriod(db, uid, createYearId, courseId, { label: p.label, order: p.order });
       }
-      reloadCourses(yearId);
+      if (createYearId !== yearId) setYearId(createYearId);
+      reloadCourses(createYearId);
     } catch {
       setError('Could not create the course.');
     }
