@@ -16,6 +16,7 @@ function makeDeps() {
   return {
     uid: 'teacher-1',
     yearId: 'year-2026',
+    resolveCreateYearId: vi.fn(async () => 'year-2026'),
     listCourses: vi.fn(async () => courses),
     createCourse: vi.fn(async () => 'course-new'),
     createPeriod: vi.fn(async () => 'period-new'),
@@ -79,6 +80,35 @@ describe('SetupPage', () => {
       'year-2026',
       'course-new',
       { label: 'Period 2', order: 2 },
+    );
+  });
+
+  it('creates the course in the CURRENT clock year, not the viewed (prior) year', async () => {
+    // Simulate the August rollover: the view shows last year, but a new course
+    // must go into THIS school year.
+    const deps = {
+      ...makeDeps(),
+      yearId: 'year-last',
+      resolveCreateYearId: vi.fn(async () => 'year-current'),
+    };
+    render(
+      <MemoryRouter>
+        <SetupPage deps={deps} />
+      </MemoryRouter>,
+    );
+    fireEvent.change(await screen.findByLabelText('Course name'), { target: { value: 'New' } });
+    fireEvent.click(screen.getByLabelText('Period 1'));
+    fireEvent.click(screen.getByRole('button', { name: /add course/i }));
+
+    await waitFor(() =>
+      expect(deps.createCourse).toHaveBeenCalledWith({ __fake: true }, 'teacher-1', 'year-current', 'New'),
+    );
+    // The course must NOT be created under the viewed prior year.
+    expect(deps.createCourse).not.toHaveBeenCalledWith(
+      { __fake: true },
+      'teacher-1',
+      'year-last',
+      'New',
     );
   });
 
