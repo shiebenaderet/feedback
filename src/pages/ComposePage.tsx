@@ -180,13 +180,14 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
           { label: data.period.label },
         ]}
       />
-      <main style={{ maxWidth: 1180, margin: '0 auto', padding: tokens.space(4) }}>
+      <main style={{ maxWidth: 1600, margin: '0 auto', padding: tokens.space(4) }}>
         <h1 style={{ marginTop: 0 }}>Write feedback · {data.period.label}</h1>
 
-        <div style={{ display: 'grid', gap: 6, marginBottom: tokens.space(3), maxWidth: 640 }}>
-          <label htmlFor="shared-header" style={{ color: tokens.color.muted, fontSize: 13 }}>
-            Shared header (top of every message)
-          </label>
+        <label
+          htmlFor="shared-header"
+          style={{ color: tokens.color.muted, fontSize: 13, marginBottom: tokens.space(3), maxWidth: 640 }}
+        >
+          Shared header (top of every message)
           <textarea
             id="shared-header"
             value={sharedHeader}
@@ -195,7 +196,7 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
             placeholder="e.g. End-of-quarter feedback — Period 1"
             style={{ width: '100%', resize: 'vertical' }}
           />
-        </div>
+        </label>
 
         <div style={{ display: 'flex', gap: tokens.space(2), alignItems: 'flex-start' }}>
           <nav

@@ -271,6 +271,38 @@ export const SEED_BANK: BankEntry[] = [
     'To grow, work on asking for help as a tool rather than giving up when you hit a wall. Persistence and reaching out go together — the strongest students do both.',
     { type: 'growth', area: 'perseverance', objective: 'self-advocacy', tone: 'encouraging' },
   ),
+
+  // ---- Next year / high school readiness (a strength now + a goal for high school) ----
+  entry(
+    'gen-readiness-success-1',
+    "One of my favorite things about you is the smile and good attitude you bring through the door every single day — never underestimate how much that lifts a room. Carry it into high school and you'll make it a better place too.",
+    { type: 'success', area: 'readiness', objective: 'presence', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-success-2',
+    "You showed up on time, ready, and dependable all year — that consistency is a real strength. It's exactly the habit that will set you apart in high school, so hold onto it.",
+    { type: 'success', area: 'readiness', objective: 'consistency', tone: 'encouraging' },
+  ),
+  entry(
+    'gen-readiness-success-3',
+    'You treat people with kindness and respect, and that matters more than any grade. As you head to high school, keep being someone others can count on to do the right thing.',
+    { type: 'success', area: 'readiness', objective: 'character', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-growth-1',
+    "A goal for high school: keep building the habit of advocating for yourself — asking for help, talking to teachers, and speaking up when you need something. You're ready for it, and it's the skill that unlocks everything else.",
+    { type: 'growth', area: 'readiness', objective: 'self-advocacy', tone: 'direct' },
+  ),
+  entry(
+    'gen-readiness-growth-2',
+    "As you move on to high school, work on staying organized and managing your time as the workload grows. You have the ability — strong systems for tracking your work will let it shine.",
+    { type: 'growth', area: 'readiness', objective: 'organization', tone: 'warm' },
+  ),
+  entry(
+    'gen-readiness-growth-3',
+    'My hope for you in high school is that you keep taking on challenges that stretch you instead of playing it safe. You grow the most when you reach a little past comfortable — go find those moments.',
+    { type: 'growth', area: 'readiness', objective: 'challenge', tone: 'encouraging' },
+  ),
 ];
 
 // Stable identity for idempotent install: the entry's own id.
