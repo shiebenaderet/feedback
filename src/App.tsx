@@ -30,6 +30,14 @@ const StudentHistoryPage = lazy(() =>
 const TrendsPage = lazy(() =>
   import('./pages/TrendsPage').then((m) => ({ default: m.TrendsPage })),
 );
+const AssignmentsPage = lazy(() =>
+  import('./pages/AssignmentsPage').then((m) => ({ default: m.AssignmentsPage })),
+);
+const AssignmentFeedbackPage = lazy(() =>
+  import('./pages/AssignmentFeedbackPage').then((m) => ({
+    default: m.AssignmentFeedbackPage,
+  })),
+);
 
 /** Lightweight fallback shown while a lazily-loaded route chunk is fetched. */
 function RouteFallback() {
@@ -124,6 +132,22 @@ export function AppRoutes() {
           element={
             <RequireAuth>
               <TrendsPage scope="course" />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/course/:courseId/assignments"
+          element={
+            <RequireAuth>
+              <AssignmentsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/course/:courseId/assignment/:assignmentId"
+          element={
+            <RequireAuth>
+              <AssignmentFeedbackPage />
             </RequireAuth>
           }
         />

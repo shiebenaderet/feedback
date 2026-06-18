@@ -3,8 +3,15 @@ import type { BankEntry, Student, ClassMeta, MessageDraft, FeedbackHistoryEntry 
 import { useComposeMessage } from './useComposeMessage';
 import { FillSlotInputs } from './FillSlotInputs';
 import { ComposeHistoryPanel } from './ComposeHistoryPanel';
-import { deriveTypeOptions, filterEntriesByType } from './bankFilter';
+import { StandardsFeedbackPicker } from './StandardsFeedbackPicker';
+import {
+  deriveTypeOptions,
+  filterEntriesByType,
+  deriveStandardOptions,
+  filterEntriesByStandard,
+} from './bankFilter';
 import { useState } from 'react';
+import { labelForCode } from '../standards/standards';
 import { tokens, cardStyle, chipStyle } from '../ui/theme';
 
 export interface ComposeScreenProps {
@@ -38,6 +45,7 @@ export function ComposeScreen({
     initial: initialDraft,
   });
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [standardFilter, setStandardFilter] = useState<string | null>(null);
 
   // Build-on-last-time: append a teacher-finishable callback into the message,
   // marking it dirty so the typed text is what gets saved.
@@ -46,10 +54,15 @@ export function ComposeScreen({
   };
 
   const typeOptions = deriveTypeOptions(entries);
+  const standardOptions = deriveStandardOptions(entries);
   // Keep the bank's natural/given order — do NOT float slot-free generic
   // comments to the top, which nudges rushed teachers toward boilerplate.
-  // Personalized {slot} templates stay equally visible.
-  const visibleEntries = filterEntriesByType(entries, typeFilter);
+  // Personalized {slot} templates stay equally visible. The type and standard
+  // filters compose: both narrow the visible set when set.
+  const visibleEntries = filterEntriesByStandard(
+    filterEntriesByType(entries, typeFilter),
+    standardFilter,
+  );
 
   // Generic-message nudge: the message uses at least one comment but no personal
   // /you-fill ("fill") slot is filled with a value — i.e. it's entirely generic.
@@ -145,6 +158,12 @@ export function ComposeScreen({
     textTransform: 'capitalize' as const,
   });
 
+  // Standard chips show a bare code (e.g. 'SSS4.6-8.1'); don't capitalize them.
+  const standardChip = (active: boolean) => ({
+    ...filterChip(active),
+    textTransform: 'none' as const,
+  });
+
   return (
     <div
       className="compose-screen"
@@ -208,6 +227,12 @@ export function ComposeScreen({
           />
         </div>
         <div style={{ marginTop: tokens.space(2) }}>
+          <StandardsFeedbackPicker
+            studentName={student.name}
+            onInsert={insertCallback}
+          />
+        </div>
+        <div style={{ marginTop: tokens.space(2) }}>
           <ComposeHistoryPanel
             studentName={student.name}
             entries={history}
@@ -248,6 +273,36 @@ export function ComposeScreen({
             </button>
           ))}
         </div>
+        {standardOptions.length > 0 && (
+          <div
+            className="bank-standard-chips"
+            role="group"
+            aria-label="Filter by standard"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: tokens.space(2) }}
+          >
+            <button
+              type="button"
+              aria-pressed={standardFilter === null}
+              onClick={() => setStandardFilter(null)}
+              style={standardChip(standardFilter === null)}
+            >
+              all standards
+            </button>
+            {standardOptions.map((code) => (
+              <button
+                key={code}
+                type="button"
+                aria-pressed={standardFilter === code}
+                title={labelForCode(code)}
+                aria-label={labelForCode(code)}
+                onClick={() => setStandardFilter((cur) => (cur === code ? null : code))}
+                style={standardChip(standardFilter === code)}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+        )}
         <ul
           className="bank-entries"
           style={{

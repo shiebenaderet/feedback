@@ -153,5 +153,16 @@ export function distinctUnits(history: FeedbackHistoryEntry[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
+/** Distinct standard codes present across the history entries' tags.standards. */
+export function distinctStandards(history: FeedbackHistoryEntry[]): string[] {
+  const set = new Set<string>();
+  for (const e of history) {
+    for (const s of e.tags.standards ?? []) {
+      if (s && s.trim() !== '') set.add(s);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 /** Re-export for callers that build "by grading period" UIs in canonical order. */
 export { GRADING_PERIODS };

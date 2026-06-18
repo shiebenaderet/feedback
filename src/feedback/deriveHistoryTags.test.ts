@@ -64,12 +64,29 @@ describe('deriveHistoryTags', () => {
     expect(tags.standards).toEqual([]);
   });
 
-  it('collects standards from a (string[] or string) standard tag when present', () => {
+  it("surfaces a used entry's tags.standard into tags.standards, deduped and order-stable", () => {
     const tags = deriveHistoryTags([
-      entry('e1', { area: 'cer', type: 'success', standard: 'RH.6-8.1' } as any),
-      entry('e2', { area: 'cer', type: 'growth', standard: ['RH.6-8.2', 'RH.6-8.1'] } as any),
+      entry('e1', { area: 'cer', type: 'success', standard: 'SSS4.6-8.1' }),
+      entry('e2', { area: 'discussion', type: 'growth', standard: 'SSS3.6-8.1' }),
+      entry('e3', { area: 'thesis', type: 'success', standard: 'SSS4.6-8.1' }),
     ]);
-    expect(tags.standards).toEqual(['RH.6-8.1', 'RH.6-8.2']);
+    expect(tags.standards).toEqual(['SSS4.6-8.1', 'SSS3.6-8.1']);
+  });
+
+  it('drops empty standard tags without inserting an empty string', () => {
+    const tags = deriveHistoryTags([
+      entry('e1', { area: 'cer', type: 'success', standard: '' }),
+      entry('e2', { area: 'thesis', type: 'success', standard: 'SSS4.6-8.1' }),
+    ]);
+    expect(tags.standards).toEqual(['SSS4.6-8.1']);
+  });
+
+  it('tolerates a legacy string[] standard tag when present', () => {
+    const tags = deriveHistoryTags([
+      entry('e1', { area: 'cer', type: 'success', standard: 'SSS1.6-8.2' } as any),
+      entry('e2', { area: 'cer', type: 'growth', standard: ['H3.6-8.4', 'SSS1.6-8.2'] } as any),
+    ]);
+    expect(tags.standards).toEqual(['SSS1.6-8.2', 'H3.6-8.4']);
   });
 
   it('returns empty arrays for no entries', () => {

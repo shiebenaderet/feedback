@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { SEED_BANK, seedKeyOf } from './seedBank';
 import { extractSlots } from './extractSlots'; // (key, kind) extractor from Task K1
+import { isKnownStandard } from '../standards/standards';
 
 describe('seed comment bank', () => {
   it('ships a meaningful number of entries', () => {
@@ -56,6 +57,15 @@ describe('seed comment bank', () => {
     expect(cer.slots.some((s) => s.kind === 'fill')).toBe(true);
     // first-person voice
     expect(cer.templateText.toLowerCase()).toMatch(/\bi (was|noticed|loved|saw)\b/);
+  });
+
+  it('every standard tag present in the bank is a known WA standard code', () => {
+    const tagged = SEED_BANK.filter((e) => e.tags.standard != null);
+    // The social-studies seed comments should carry curricular standards.
+    expect(tagged.length).toBeGreaterThanOrEqual(10);
+    for (const e of tagged) {
+      expect(isKnownStandard(e.tags.standard as string), `${e.id} → ${e.tags.standard}`).toBe(true);
+    }
   });
 
   it('seedKeyOf is stable and unique per entry (for idempotent install)', () => {

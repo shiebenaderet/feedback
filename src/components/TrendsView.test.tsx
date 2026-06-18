@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { TrendsView } from './TrendsView';
 import type { TrendsSummary } from '../feedback/aggregateTrends';
 
@@ -47,6 +47,26 @@ describe('TrendsView', () => {
     expect(cells[0]).toHaveTextContent('Q1');
     expect(cells[0]).toHaveTextContent('4');
     expect(cells[1]).toHaveTextContent('Q2');
+  });
+
+  it('renders standard-filter chips (bare codes, full label as accessible name) and reports selection', () => {
+    const onSelectStandard = vi.fn();
+    render(
+      <TrendsView
+        summary={summary}
+        standards={['SSS1.6-8.2', 'SSS4.6-8.1']}
+        selectedStandard={null}
+        onSelectStandard={onSelectStandard}
+      />,
+    );
+    const group = screen.getByRole('group', { name: /filter by standard/i });
+    expect(within(group).getByRole('button', { name: /all standards/i })).toBeInTheDocument();
+    const chip = within(group).getByRole('button', { name: /SSS4\.6-8\.1/ });
+    // Bare code is the visible label; full description is the accessible name.
+    expect(chip).toHaveTextContent('SSS4.6-8.1');
+    expect(chip.getAttribute('aria-label')).toMatch(/SSS4\.6-8\.1 —/);
+    fireEvent.click(chip);
+    expect(onSelectStandard).toHaveBeenCalledWith('SSS4.6-8.1');
   });
 
   it('renders an empty state when there is no feedback', () => {

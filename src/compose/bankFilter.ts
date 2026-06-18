@@ -18,3 +18,22 @@ export function filterEntriesByType(
   if (type === null) return entries;
   return entries.filter((e) => e.tags.type === type);
 }
+
+/** Distinct, sorted, defined `tags.standard` codes present in the given entries. */
+export function deriveStandardOptions(entries: BankEntry[]): string[] {
+  const set = new Set<string>();
+  for (const e of entries) {
+    const s = e.tags.standard;
+    if (s) set.add(s);
+  }
+  return [...set].sort();
+}
+
+/** Filter entries by standard code; `null` means no filter (return all). */
+export function filterEntriesByStandard(
+  entries: BankEntry[],
+  standard: string | null,
+): BankEntry[] {
+  if (standard === null) return entries;
+  return entries.filter((e) => e.tags.standard === standard);
+}

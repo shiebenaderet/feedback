@@ -32,6 +32,8 @@ export interface BankTags {
   area?: string;
   objective?: string;
   tone?: string;
+  /** A single WA standard/component code this comment maps to, e.g. 'SSS4.6-8.1'. */
+  standard?: string;
 }
 
 export interface BankEntry {
@@ -94,6 +96,28 @@ export interface Course {
   archived?: boolean;
 }
 
+/**
+ * A graded assignment under a course, linked to WA standards. Used by the
+ * "grade in Canvas → write standards-based feedback here" companion flow.
+ * Path: teachers/{uid}/years/{yearId}/courses/{courseId}/assignments/{id}
+ */
+export interface Assignment {
+  id: string;
+  yearId: string;
+  courseId: string;
+  title: string;
+  /** Linked WA standard/component codes (e.g. ['SSS4.6-8.1','H3.6-8.4']). */
+  standardCodes: string[];
+  /** Summative assignments are the ones this companion is meant for. */
+  summative: boolean;
+  /** Which period sections this assignment covers. */
+  periodIds: string[];
+  /** Set if/when the Canvas API is wired (not used by the copy-paste flow). */
+  canvasAssignmentId?: string;
+  /** Epoch millis the assignment was created. */
+  createdAt: number;
+}
+
 /** A grading period within a course; `order` fixes its position in the year. */
 export interface Period {
   id: string;
@@ -123,6 +147,8 @@ export interface FeedbackHistoryEntry {
   label?: string;
   /** Optional unit/topic this feedback covered (e.g. "Revolution"). */
   unit?: string;
+  /** Optional assignment this feedback was written for (assignment-flow). */
+  assignmentId?: string;
   /** The exact message text the student received. */
   finalText: string;
   /** Derived tags, re-derivable from usedEntries under a future mapping. */

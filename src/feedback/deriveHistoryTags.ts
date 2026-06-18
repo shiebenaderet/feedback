@@ -21,8 +21,8 @@ function pushUnique(acc: string[], value: unknown): void {
  * - areas: each entry's tags.area, deduped, in first-seen order.
  * - sentiments: deriveSentiment(entry.tags.type) per the taxonomy
  *   (success→strength, growth→growth, behavior/skill→neutral), deduped.
- * - standards: a future 'standard' tag (string or string[]); empty today since
- *   seed entries carry no standard.
+ * - standards: each entry's tags.standard, deduped and empties dropped (entries
+ *   without a curricular match carry no standard).
  *
  * Pure and synchronous — the raw usedEntries are stored alongside the result so
  * trends can be re-derived under a new taxonomy at any time.
@@ -38,7 +38,8 @@ export function deriveHistoryTags(entries: BankEntry[]): DerivedTags {
     const sentiment = e.tags.type ? deriveSentiment(e.tags.type) : undefined;
     pushUnique(sentiments, sentiment);
 
-    // Future 'standard' tag — not yet in BankTags, read defensively.
+    // A bank entry's standard tag → the history entry's standards array
+    // (read tolerantly in case legacy data carried a string[]).
     pushUnique(standards, (e.tags as { standard?: string | string[] }).standard);
   }
 

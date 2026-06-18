@@ -35,6 +35,15 @@ export interface WriteFeedbackHistoryArgs {
   label: string;
   /** Optional unit/topic for the round; omitted from the doc when empty. */
   unit?: string;
+  /** Optional assignment this feedback was written for (assignment flow). */
+  assignmentId?: string;
+  /**
+   * Extra standard codes to record (e.g. an assignment's linked standards, or
+   * the standard a leveled comment targets), merged into tags.standards. Lets
+   * assignment/leveled feedback show up in standard slicing even when the text
+   * wasn't built from standard-tagged bank entries.
+   */
+  extraStandards?: string[];
   /** Timestamp (ms) the round went out; injected for deterministic tests. */
   sentAt: number;
   /**
@@ -65,7 +74,7 @@ export async function writeFeedbackHistory(
   deps: FirestoreWriteDeps = defaultDeps,
 ): Promise<string> {
   const { doc, setDoc } = deps;
-  const { draft, bankEntries, tree, gradingPeriod, label, unit, sentAt, batchId } = args;
+  const { draft, bankEntries, tree, gradingPeriod, label, unit, assignmentId, extraStandards, sentAt, batchId } = args;
 
   const byId = new Map(bankEntries.map((e) => [e.id, e]));
   const resolved = draft.usedEntries
@@ -73,6 +82,11 @@ export async function writeFeedbackHistory(
     .filter((e): e is BankEntry => !!e);
 
   const tags = deriveHistoryTags(resolved);
+  // Merge any explicitly-supplied standards (assignment links / leveled comment
+  // targets) into the derived tags, de-duplicated.
+  if (extraStandards && extraStandards.length) {
+    tags.standards = Array.from(new Set([...tags.standards, ...extraStandards.filter(Boolean)]));
+  }
 
   const path = `teachers/${uid}/years/${tree.yearId}/courses/${tree.courseId}/periods/${tree.periodId}/students/${draft.studentId}/feedbackHistory`;
 
@@ -93,6 +107,7 @@ export async function writeFeedbackHistory(
   };
   if (label) entry.label = label;
   if (unit) entry.unit = unit;
+  if (assignmentId) entry.assignmentId = assignmentId;
 
   // Deterministic id keyed by the round → idempotent re-writes (no duplicates).
   const entryId = `${batchId}__${draft.studentId}`;

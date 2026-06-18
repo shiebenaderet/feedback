@@ -56,6 +56,38 @@ describe('ComposeScreen', () => {
     expect(screen.queryByRole('button', { name: 'success' })).toBeNull();
   });
 
+  it('renders standard-filter chips and narrows the bank to entries carrying that standard', () => {
+    const standardEntries: BankEntry[] = [
+      { id: 's-cer', templateText: 'CER comment.', slots: [], tags: { type: 'success', area: 'cer', standard: 'SSS1.6-8.2' } },
+      { id: 's-thesis', templateText: 'Thesis comment.', slots: [], tags: { type: 'success', area: 'thesis', standard: 'SSS4.6-8.1' } },
+      { id: 's-generic', templateText: 'Generic comment.', slots: [], tags: { type: 'success', area: 'attitude' } },
+    ];
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={standardEntries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    // The bare code is rendered on the chip; the full label is its accessible name.
+    const chip = screen.getByRole('button', { name: /SSS4\.6-8\.1/ });
+    expect(chip.textContent).toBe('SSS4.6-8.1');
+    // All three entries visible before filtering.
+    expect(screen.getByTestId('add-s-cer')).toBeTruthy();
+    expect(screen.getByTestId('add-s-thesis')).toBeTruthy();
+    expect(screen.getByTestId('add-s-generic')).toBeTruthy();
+    // Filter to the thesis standard → only that entry remains.
+    fireEvent.click(chip);
+    expect(screen.getByTestId('add-s-thesis')).toBeTruthy();
+    expect(screen.queryByTestId('add-s-cer')).toBeNull();
+    expect(screen.queryByTestId('add-s-generic')).toBeNull();
+    // Type + standard compose: also narrowing by a non-matching type empties it.
+    fireEvent.click(chip); // clear standard
+    expect(screen.getByTestId('add-s-cer')).toBeTruthy();
+  });
+
   it('adding an entry + filling a slot debounce-saves a real MessageDraft with batchId', async () => {
     const onAutoSave: ReturnType<typeof vi.fn> = vi.fn();
     render(
@@ -351,6 +383,77 @@ describe('ComposeScreen', () => {
     expect(field.value).toContain('Last time, I mentioned:');
     expect(field.value.indexOf('My own intro.')).toBeLessThan(
       field.value.indexOf('Last time, I mentioned:'),
+    );
+  });
+
+  it('Standards feedback: selecting a standard + "3 Proficient" inserts that comment with {name} filled', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const select = screen.getByTestId('standards-feedback-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'C2.6-8.3' } });
+    fireEvent.click(screen.getByRole('button', { name: '3 Proficient' }));
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    // C2.6-8.3 level 3 text, with {name} replaced by the student's first name.
+    expect(field.value).toContain(
+      'Carlos, you accurately describe the structure of the national government',
+    );
+    expect(field.value).not.toContain('{name}');
+  });
+
+  it('Standards feedback: "Include next step" includes the nextStep when checked and omits it when unchecked', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const select = screen.getByTestId('standards-feedback-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'C2.6-8.3' } });
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    const nextStep = 'Add depth by explaining why a power was given to one branch and not another.';
+
+    // Default: checkbox checked → nextStep included.
+    fireEvent.click(screen.getByRole('button', { name: '3 Proficient' }));
+    expect(field.value).toContain(nextStep);
+
+    // Uncheck → nextStep omitted on the next insert.
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.click(screen.getByLabelText('Include next step'));
+    fireEvent.click(screen.getByRole('button', { name: '3 Proficient' }));
+    expect(field.value).not.toContain(nextStep);
+    expect(field.value).toContain(
+      'Carlos, you accurately describe the structure of the national government',
+    );
+  });
+
+  it('Standards feedback: inserting appends below existing typed text rather than replacing it', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: 'My own intro.' } });
+    const select = screen.getByTestId('standards-feedback-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'C2.6-8.3' } });
+    fireEvent.click(screen.getByRole('button', { name: '4 Exemplary' }));
+    expect(field.value).toContain('My own intro.');
+    expect(field.value.indexOf('My own intro.')).toBeLessThan(
+      field.value.indexOf('Carlos,'),
     );
   });
 

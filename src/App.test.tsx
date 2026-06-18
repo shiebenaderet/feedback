@@ -56,7 +56,8 @@ describe('AppRoutes', () => {
       user: { email: 'teacher@example.com' },
     });
     expect(
-      await screen.findByText(/signed in as teacher@example.com/i),
+      // Real (un-mocked) HomePage is lazy-loaded; give the chunk transform headroom.
+      await screen.findByText(/signed in as teacher@example.com/i, undefined, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
 });

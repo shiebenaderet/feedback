@@ -146,6 +146,14 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
           {cards.map(({ course, periods }) => (
             <section key={course.id} style={cardStyle()} aria-label={course.name}>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>{course.name}</h2>
+              <p style={{ margin: `0 0 ${tokens.space(1.5)}px`, fontSize: 14 }}>
+                <Link
+                  to={`/course/${course.id}/assignments`}
+                  style={{ color: tokens.color.teal }}
+                >
+                  Assignments
+                </Link>
+              </p>
 
               {periods.length === 0 ? (
                 <p style={{ color: tokens.color.muted, fontSize: 14 }}>

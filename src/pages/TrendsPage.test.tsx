@@ -17,8 +17,8 @@ const bank: BankEntry[] = [
   { id: 'b-growth', templateText: '', slots: [], tags: { type: 'growth', area: 'discussion' } },
 ];
 const periodHistory: FeedbackHistoryEntry[] = [
-  { id: 'h1', studentId: 's1', periodId: 'p1', courseId: 'c1', yearId: 'y1', sentAt: 100, gradingPeriod: 'Q1', unit: 'Revolution', finalText: 'x', tags: { areas: ['cer'], sentiments: [], standards: [] }, usedEntries: ['b-success'] },
-  { id: 'h2', studentId: 's2', periodId: 'p1', courseId: 'c1', yearId: 'y1', sentAt: 150, gradingPeriod: 'Q1', unit: 'Genetics', finalText: 'y', tags: { areas: ['discussion'], sentiments: [], standards: [] }, usedEntries: ['b-growth'] },
+  { id: 'h1', studentId: 's1', periodId: 'p1', courseId: 'c1', yearId: 'y1', sentAt: 100, gradingPeriod: 'Q1', unit: 'Revolution', finalText: 'x', tags: { areas: ['cer'], sentiments: [], standards: ['SSS1.6-8.2'] }, usedEntries: ['b-success'] },
+  { id: 'h2', studentId: 's2', periodId: 'p1', courseId: 'c1', yearId: 'y1', sentAt: 150, gradingPeriod: 'Q1', unit: 'Genetics', finalText: 'y', tags: { areas: ['discussion'], sentiments: [], standards: ['SSS3.6-8.1'] }, usedEntries: ['b-growth'] },
 ];
 
 const roster: Student[] = [
@@ -114,5 +114,29 @@ describe('TrendsPage', () => {
     const chips = within(region).getAllByText(/never contacted/i);
     // Beto + Cleo are now both never-contacted within this unit.
     expect(chips.length).toBe(2);
+  });
+
+  it('standard filter narrows BOTH the trends total and the trajectories', async () => {
+    const user = userEvent.setup();
+    const deps = makeDeps();
+    render(
+      <MemoryRouter initialEntries={['/course/c1/period/p1/trends']}>
+        <Routes>
+          <Route path="/course/:courseId/period/:periodId/trends" element={<TrendsPage deps={deps} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText(/2 pieces of feedback/i)).toBeInTheDocument();
+
+    // The standard chips live in the "Filter by standard" group.
+    const group = screen.getByRole('group', { name: /filter by standard/i });
+    // Pick the SSS1.6-8.2 chip → only h1 (s1) survives.
+    await user.click(within(group).getByRole('button', { name: /SSS1\.6-8\.2/ }));
+    await waitFor(() => expect(screen.getByText(/1 pieces of feedback/i)).toBeInTheDocument());
+
+    // After filtering to that standard, s2 (Beto) becomes never-contacted too.
+    const region = screen.getByRole('region', { name: /student trajectories/i });
+    const noContact = within(region).getAllByText(/never contacted/i);
+    expect(noContact.length).toBe(2);
   });
 });

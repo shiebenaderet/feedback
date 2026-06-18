@@ -11,6 +11,7 @@ import { aggregateTrends } from '../feedback/aggregateTrends';
 import {
   aggregateStudentTrajectories,
   distinctUnits,
+  distinctStandards,
 } from '../feedback/aggregateStudentTrajectories';
 import { TrendsView } from '../components/TrendsView';
 import { StudentTrajectoryView } from '../components/StudentTrajectoryView';
@@ -69,6 +70,7 @@ export function TrendsPage({
   const [students, setStudents] = useState<Student[]>([]);
   const [yearId, setYearId] = useState<string>('');
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [selectedStandard, setSelectedStandard] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,17 +107,26 @@ export function TrendsPage({
   }, [uid, scope, courseId, periodId]);
 
   const units = useMemo(() => distinctUnits(history ?? []), [history]);
+  const standards = useMemo(() => distinctStandards(history ?? []), [history]);
 
-  // Reset the unit selection if it no longer exists in the loaded history.
+  // Reset a selection if it no longer exists in the loaded history.
   useEffect(() => {
     if (selectedUnit !== null && !units.includes(selectedUnit)) setSelectedUnit(null);
   }, [units, selectedUnit]);
+  useEffect(() => {
+    if (selectedStandard !== null && !standards.includes(selectedStandard))
+      setSelectedStandard(null);
+  }, [standards, selectedStandard]);
 
-  // The unit filter narrows the entries before EITHER aggregation runs.
+  // The unit + standard filters narrow the entries before EITHER aggregation runs.
   const filtered = useMemo(() => {
     const all = history ?? [];
-    return selectedUnit === null ? all : all.filter((e) => e.unit === selectedUnit);
-  }, [history, selectedUnit]);
+    return all.filter(
+      (e) =>
+        (selectedUnit === null || e.unit === selectedUnit) &&
+        (selectedStandard === null || (e.tags.standards ?? []).includes(selectedStandard)),
+    );
+  }, [history, selectedUnit, selectedStandard]);
 
   const summary = useMemo(() => aggregateTrends(filtered, bank), [filtered, bank]);
   const trajectories = useMemo(
@@ -136,6 +147,9 @@ export function TrendsPage({
               units={units}
               selectedUnit={selectedUnit}
               onSelectUnit={setSelectedUnit}
+              standards={standards}
+              selectedStandard={selectedStandard}
+              onSelectStandard={setSelectedStandard}
             />
             {scope === 'period' && (
               <StudentTrajectoryView
