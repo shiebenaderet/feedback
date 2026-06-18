@@ -19,6 +19,8 @@
   --danger-border: #4a2a2a;
   --danger-bg: #2a1a1a;
   --placeholder: #828892;
+  /* Theme-switched teal tint for chips, slot tokens, and focus rings. */
+  --teal-tint: rgba(95, 184, 168, 0.12);
 }
 
 /* Light theme — opt in via <html data-theme="light">.
@@ -34,12 +36,14 @@
   --text: #1a1d23;
   --muted: #5a6170;
   --subtle: #3f444f;
-  --border: #d9dde4;
+  --border: #c4c9d2;
   --border-hover: #b9bfca;
   --danger: #b3261e;
   --danger-border: #e6b4b1;
   --danger-bg: #f7e3e2;
   --placeholder: #5f6573;
+  /* Light-appropriate teal tint (darker teal so it reads on white panels). */
+  --teal-tint: rgba(44, 122, 110, 0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -87,27 +91,57 @@ input:not([type]):focus,
 textarea:focus,
 select:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 2px rgba(95, 184, 168, 0.18);
+  box-shadow: 0 0 0 2px var(--teal-tint, rgba(95, 184, 168, 0.12));
 }
 input::placeholder, textarea::placeholder { color: var(--placeholder); }
 
 textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
 
-/* Labels — stack above their input by default. */
+/* Text inputs / textareas / selects fill their field container by default so
+   a standalone <label> followed by a sibling control reads as a clean stack
+   (the container should cap the width — see the form max-width below). */
+input[type='text'],
+input[type='email'],
+input:not([type]),
+textarea,
+select {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Labels — a plain block that sits above its control. A bare <label> with no
+   nested control no longer collapses (the old inline-flex column did). */
 label {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 5px;
+  display: block;
+  margin-bottom: 5px;
   font-size: 13px;
   color: var(--muted);
 }
-/* Inline checkbox/radio labels read as a row, not a stack. */
+/* Labels that DO wrap their control still stack nicely with a small gap. */
+label:has(> input[type='text']),
+label:has(> input[type='email']),
+label:has(> input:not([type])),
+label:has(> textarea),
+label:has(> select) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 0;
+}
+/* Inline checkbox/radio labels read as a row, not a stack — and the box itself
+   must not stretch to full width. */
 label:has(> input[type='checkbox']),
 label:has(> input[type='radio']) {
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin-bottom: 0;
 }
+input[type='checkbox'], input[type='radio'] { width: auto; }
+
+/* Cap form-field width so inputs aren't absurdly wide on large screens. */
+form { max-width: 720px; }
 
 /* Buttons — default to a quiet dark chip; .accent / submit opt into teal. */
 button {

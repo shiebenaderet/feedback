@@ -68,6 +68,7 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
 
   const [yearId, setYearId] = useState<string>(deps?.yearId ?? '');
   const [cards, setCards] = useState<CourseCard[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,7 +76,12 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
     let cancelled = false;
     resolveActiveYear(db, uid)
       .then((id) => !cancelled && setYearId(id))
-      .catch(() => !cancelled && setError('Could not load the current year.'));
+      .catch(() => {
+        if (!cancelled) {
+          setError('Could not load the current year.');
+          setLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -87,6 +93,10 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
     let cancelled = false;
     (async () => {
       try {
+        // PHASE 1 — fast reads only (courses → periods → roster counts). These
+        // render the dashboard immediately; progress (a slow collection-group
+        // history query that may need an index) is loaded in PHASE 2 below so it
+        // NEVER blocks the course list from appearing.
         const courses = await api.listCourses(db, uid, yearId, undefined, {
           includeArchived: false,
         });
@@ -96,29 +106,51 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
             const rows = await Promise.all(
               periods.map(async (p) => {
                 const total = await api.rosterSize(db, uid, yearId, course.id, p.id);
-                // The history read is a collection-group query that needs a
-                // composite index; if it isn't ready (or errors), the dashboard
-                // must still render — degrade this period's progress to 0 done.
-                let history: FeedbackHistoryEntry[] = [];
-                try {
-                  history = await api.listFeedbackHistory(db, uid, {
-                    yearId,
-                    courseId: course.id,
-                    periodId: p.id,
-                  });
-                } catch {
-                  history = [];
-                }
-                const { done } = periodFeedbackProgress(total, history, gradingPeriod);
-                return { ...p, done, total };
+                return { ...p, done: 0, total };
               }),
             );
             return { course, periods: rows };
           }),
         );
-        if (!cancelled) setCards(built);
+        if (cancelled) return;
+        setCards(built);
+        setLoading(false);
+
+        // PHASE 2 — progressively fill each period's "done" count. Each history
+        // read is independent and best-effort: a slow or failing one (missing
+        // index, permission hiccup) just leaves that period at 0, and never
+        // delays or errors the rest of the dashboard.
+        for (const { course, periods } of built) {
+          for (const p of periods) {
+            if (p.total === 0) continue;
+            api
+              .listFeedbackHistory(db, uid, { yearId, courseId: course.id, periodId: p.id })
+              .then((history) => {
+                if (cancelled) return;
+                const { done } = periodFeedbackProgress(p.total, history, gradingPeriod);
+                setCards((prev) =>
+                  prev.map((c) =>
+                    c.course.id !== course.id
+                      ? c
+                      : {
+                          ...c,
+                          periods: c.periods.map((row) =>
+                            row.id === p.id ? { ...row, done } : row,
+                          ),
+                        },
+                  ),
+                );
+              })
+              .catch(() => {
+                /* degrade silently: this period stays at 0 done */
+              });
+          }
+        }
       } catch {
-        if (!cancelled) setError('Could not load your courses.');
+        if (!cancelled) {
+          setError('Could not load your courses.');
+          setLoading(false);
+        }
       }
     })();
     return () => {
@@ -135,6 +167,46 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
         <p style={{ color: tokens.color.muted }}>Signed in as {user?.email}</p>
         {error && <p role="alert">{error}</p>}
 
+        {loading && !error && (
+          <div
+            aria-label="Loading your courses"
+            aria-busy="true"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: tokens.space(2),
+              marginTop: tokens.space(2),
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ ...cardStyle(), opacity: 0.6 }}>
+                <div
+                  style={{
+                    height: 18,
+                    width: '55%',
+                    background: tokens.color.panelAlt,
+                    borderRadius: tokens.radius.sm,
+                    marginBottom: tokens.space(2),
+                  }}
+                />
+                {[0, 1, 2].map((j) => (
+                  <div
+                    key={j}
+                    style={{
+                      height: 12,
+                      width: `${80 - j * 12}%`,
+                      background: tokens.color.panelAlt,
+                      borderRadius: tokens.radius.sm,
+                      marginBottom: tokens.space(1.5),
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && (
         <div
           style={{
             display: 'grid',
@@ -243,6 +315,7 @@ export default function HomePage({ deps }: { deps?: Partial<HomePageDeps> }) {
             + Add course
           </Link>
         </div>
+        )}
       </main>
     </>
   );

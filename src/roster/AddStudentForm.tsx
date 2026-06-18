@@ -44,13 +44,13 @@ export function AddStudentForm({ onAdd }: AddStudentFormProps) {
   return (
     <div
       className="add-student-form"
-      style={{ display: 'flex', gap: tokens.space(1), alignItems: 'flex-end', flexWrap: 'wrap' }}
+      style={{ display: 'flex', gap: tokens.space(1.5), alignItems: 'flex-end', flexWrap: 'wrap' }}
     >
-      <label style={{ display: 'flex', flexDirection: 'column', color: tokens.color.subtle }}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 5, color: tokens.color.subtle, flex: '1 1 180px' }}>
         Student name
         <input value={name} onChange={(e) => setName(e.target.value)} />
       </label>
-      <label style={{ display: 'flex', flexDirection: 'column', color: tokens.color.subtle }}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 5, color: tokens.color.subtle, flex: '1 1 220px' }}>
         Student email
         <input value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
