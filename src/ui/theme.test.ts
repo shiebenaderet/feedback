@@ -15,13 +15,13 @@ import {
 } from './theme';
 
 describe('theme tokens', () => {
-  it('exposes the B+C palette with the exact LandingPage hexes', () => {
-    expect(tokens.color.bg).toBe('#0d0d0f');
-    expect(tokens.color.panel).toBe('#15171c');
-    expect(tokens.color.panelAlt).toBe('#1a1d23');
-    expect(tokens.color.teal).toBe('#5fb8a8');
-    expect(tokens.color.text).toBe('#e7e9ee');
-    expect(tokens.color.muted).toBe('#9aa1ad');
+  it('exposes the B+C palette as CSS vars with the LandingPage hexes as fallbacks', () => {
+    expect(tokens.color.bg).toBe('var(--bg, #0d0d0f)');
+    expect(tokens.color.panel).toBe('var(--panel, #15171c)');
+    expect(tokens.color.panelAlt).toBe('var(--panel-alt, #1a1d23)');
+    expect(tokens.color.teal).toBe('var(--teal, #5fb8a8)');
+    expect(tokens.color.text).toBe('var(--text, #e7e9ee)');
+    expect(tokens.color.muted).toBe('var(--muted, #9aa1ad)');
   });
 
   it('exposes a system-ui font stack and a spacing/radius scale', () => {
@@ -83,7 +83,7 @@ describe('B+C layout primitives', () => {
   it('breadcrumbStyle is a muted inline row; separators are subtler still', () => {
     expect(breadcrumbStyle().display).toBe('flex');
     expect(breadcrumbStyle().color).toBe(tokens.color.muted);
-    expect(breadcrumbSepStyle().color).toBe(tokens.color.border);
+    expect(breadcrumbSepStyle().color).toBe(tokens.color.muted);
   });
 
   it('navBarStyle is a bordered top bar on the panel surface', () => {

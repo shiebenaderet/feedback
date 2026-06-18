@@ -1,7 +1,20 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ComposeScreen } from './ComposeScreen';
-import type { BankEntry, Student, ClassMeta, MessageDraft } from '../types';
+import type { BankEntry, Student, ClassMeta, MessageDraft, FeedbackHistoryEntry } from '../types';
+
+const historyEntry: FeedbackHistoryEntry = {
+  id: 'h1',
+  studentId: 's1',
+  periodId: 'c1',
+  courseId: 'co1',
+  yearId: 'y1',
+  sentAt: Date.UTC(2025, 9, 12),
+  gradingPeriod: 'Q1',
+  finalText: 'Carlos showed real growth leading the lab cleanup last quarter.',
+  tags: { areas: [], sentiments: [], standards: [] },
+  usedEntries: [],
+};
 
 const student: Student = { id: 's1', name: 'Carlos', email: 'carlos@example.com' };
 const classMeta: ClassMeta = { id: 'c1', name: 'Period 3 Biology', semester: 'spring' };
@@ -89,5 +102,270 @@ describe('ComposeScreen', () => {
     );
     vi.advanceTimersByTime(800);
     expect(onAutoSave).not.toHaveBeenCalled();
+  });
+
+  it('flushes a pending edit synchronously on unmount (no lost last keystroke)', () => {
+    const onAutoSave: ReturnType<typeof vi.fn> = vi.fn();
+    const { unmount } = render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={onAutoSave}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('add-e1'));
+    fireEvent.change(screen.getByLabelText('moment'), {
+      target: { value: 'he redesigned the experiment' },
+    });
+    // Unmount BEFORE the 800ms debounce elapses — the edit is still pending.
+    expect(onAutoSave).not.toHaveBeenCalled();
+    act(() => {
+      unmount();
+    });
+    expect(onAutoSave).toHaveBeenCalledTimes(1);
+    const [batchId, draft] = onAutoSave.mock.calls[0] as [string, MessageDraft];
+    expect(batchId).toBe('b1');
+    expect(draft).toMatchObject<Partial<MessageDraft>>({
+      studentId: 's1',
+      usedEntries: ['e1'],
+      slotValues: { moment: 'he redesigned the experiment' },
+      finalText: 'Carlos grew this spring when he redesigned the experiment.',
+    });
+  });
+
+  it('does NOT flush on unmount when nothing was touched', () => {
+    const onAutoSave = vi.fn();
+    const { unmount } = render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={onAutoSave}
+      />,
+    );
+    act(() => {
+      unmount();
+    });
+    expect(onAutoSave).not.toHaveBeenCalled();
+  });
+
+  it('does NOT double-save when the debounce already fired before unmount', () => {
+    const onAutoSave = vi.fn();
+    const { unmount } = render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={onAutoSave}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('add-e1'));
+    vi.advanceTimersByTime(800);
+    expect(onAutoSave).toHaveBeenCalledTimes(1);
+    act(() => {
+      unmount();
+    });
+    // Unmount must not re-fire a save that already flushed.
+    expect(onAutoSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT float zero-slot generic comments above personalized templates', () => {
+    // Bank order is [e1 (3 slots), e2 (0 slots)]; the rendered order must match
+    // (no slot-count reordering that would push the generic e2 to the top).
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const buttons = screen.getAllByRole('button', { name: /grew this|Nice collaboration/ });
+    expect(buttons[0]).toHaveTextContent('grew this');
+    expect(buttons[1]).toHaveTextContent('Nice collaboration');
+  });
+
+  it('shows the specificity nudge for an entirely-generic message and hides it once a personal slot is filled', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    // No comments yet → no nudge.
+    expect(screen.queryByTestId('specificity-nudge')).toBeNull();
+    // Add the generic, slot-free comment → nudge appears.
+    fireEvent.click(screen.getByTestId('add-e2'));
+    expect(screen.getByTestId('specificity-nudge')).toBeTruthy();
+    // Add a templated comment and fill its personal slot → nudge disappears.
+    fireEvent.click(screen.getByTestId('add-e1'));
+    expect(screen.getByTestId('specificity-nudge')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('moment'), {
+      target: { value: 'he led the lab cleanup' },
+    });
+    expect(screen.queryByTestId('specificity-nudge')).toBeNull();
+  });
+
+  it('lets the teacher type freely; the typed text is what gets saved', () => {
+    const onAutoSave: ReturnType<typeof vi.fn> = vi.fn();
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={onAutoSave}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: 'A wholly hand-written message.' } });
+    expect(field.value).toBe('A wholly hand-written message.');
+    vi.advanceTimersByTime(800);
+    expect(onAutoSave).toHaveBeenCalled();
+    const calls = onAutoSave.mock.calls;
+    const [, draft] = calls[calls.length - 1] as [string, MessageDraft];
+    expect(draft.finalText).toBe('A wholly hand-written message.');
+  });
+
+  it('clicking a bank entry while clean mirrors the assembled template', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    expect(field.value).toBe('');
+    fireEvent.click(screen.getByTestId('add-e2'));
+    expect(field.value).toBe('Nice collaboration.');
+    // still reactive to slot fills via assembled
+    fireEvent.click(screen.getByTestId('add-e1'));
+    expect(field.value).toContain('Nice collaboration.');
+    expect(field.value).toContain('Carlos grew this spring when');
+  });
+
+  it('clicking a bank entry while dirty APPENDS to the typed text', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: 'My own intro.' } });
+    fireEvent.click(screen.getByTestId('add-e2'));
+    expect(field.value).toBe('My own intro.\n\nNice collaboration.');
+  });
+
+  it('preserves a resumed manually-edited draft (finalText differs from assembled)', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+        initialDraft={{
+          usedEntries: ['e2'],
+          slotValues: {},
+          finalText: 'Hand-edited resumed text, not the template.',
+        }}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    expect(field.value).toBe('Hand-edited resumed text, not the template.');
+  });
+
+  it('keeps a purely template-built resumed draft reactive (not dirty)', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+        initialDraft={{
+          usedEntries: ['e2'],
+          slotValues: {},
+          finalText: 'Nice collaboration.',
+        }}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    expect(field.value).toBe('Nice collaboration.');
+    // Because it's clean, adding another entry mirrors the assembled template.
+    fireEvent.click(screen.getByTestId('add-e1'));
+    expect(field.value).toContain('Nice collaboration.');
+    expect(field.value).toContain('Carlos grew this spring when');
+  });
+
+  it('clicking "Reference this" inserts a build-on-last-time callback into the message', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+        history={[historyEntry]}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    expect(field.value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Reference this' }));
+    // Inserts the finishable callback referencing the prior feedback excerpt.
+    expect(field.value).toContain('Last time, I mentioned:');
+    expect(field.value).toContain('Carlos showed real growth');
+    expect(field.value).toMatch(/This time,\s*$/);
+  });
+
+  it('"Reference this" appends below existing typed text (preserves prior content)', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+        history={[historyEntry]}
+      />,
+    );
+    const field = screen.getByTestId('final-text') as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: 'My own intro.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Reference this' }));
+    expect(field.value).toContain('My own intro.');
+    expect(field.value).toContain('Last time, I mentioned:');
+    expect(field.value.indexOf('My own intro.')).toBeLessThan(
+      field.value.indexOf('Last time, I mentioned:'),
+    );
+  });
+
+  it('renders the empty history state when the student has no prior feedback', () => {
+    render(
+      <ComposeScreen
+        batchId="b1"
+        student={student}
+        classMeta={classMeta}
+        entries={entries}
+        onAutoSave={vi.fn()}
+        history={[]}
+      />,
+    );
+    expect(screen.getByText(/No feedback sent to Carlos yet/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reference this' })).toBeNull();
   });
 });

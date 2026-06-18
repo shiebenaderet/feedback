@@ -69,4 +69,19 @@ describe('SendStepper', () => {
     render(<SendStepper messages={messages} sent={{ m1: true }} onMarkSent={vi.fn()} onMarkAllSent={vi.fn()} />);
     expect(screen.getByText(/already sent/i)).toBeInTheDocument();
   });
+
+  it('shows and copies the subject line when a subject is provided', () => {
+    render(
+      <SendStepper
+        messages={messages}
+        sent={{}}
+        onMarkSent={vi.fn()}
+        onMarkAllSent={vi.fn()}
+        subject="Q2 feedback"
+      />,
+    );
+    expect(screen.getByText(/Subject: Q2 feedback/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /copy subject/i }));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Q2 feedback');
+  });
 });

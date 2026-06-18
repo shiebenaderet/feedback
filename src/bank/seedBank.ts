@@ -428,6 +428,269 @@ export const SEED_BANK: BankEntry[] = [
     'You have a knack for making other people feel included and respected. That is a rare gift, and our class was warmer because of it.',
     { type: 'success', area: 'attitude', objective: 'kindness', tone: 'encouraging' },
   ),
+
+  // ============================================================
+  // SOCIAL STUDIES / U.S. HISTORY personalized comments (8th grade).
+  // Slot-based (seed-*), each starts with {name}. Every new area carries a
+  // strength (success/skill) AND a paired actionable growth comment.
+  // Mix of end-of-year and mid-year (present-tense) phrasings for Q1–Q4 use.
+  // New slots used inline: {assignment}, {unit}, {strength}, {next_step}.
+  // ============================================================
+
+  // ---- Primary-source analysis ----
+  entry(
+    'seed-primary-source-skill-1',
+    "{name}, you've gotten sharp at reading a primary source for what it really says — on our {unit} documents you noticed the author's point of view and asked who wrote it and why. That's exactly how a historian thinks.",
+    { type: 'skill', area: 'primary-source', objective: 'source-analysis', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-primary-source-success-1',
+    "{name}, your analysis of the {assignment} document was excellent — you pulled a direct quote, explained what it meant in its own time, and connected it to what we were studying. I was impressed when {personal_detail}.",
+    { type: 'success', area: 'primary-source', objective: 'source-analysis', tone: 'warm' },
+  ),
+  entry(
+    'seed-primary-source-growth-1',
+    "{name}, this week I noticed you summarize what a document says but stop short of asking who made it and why. Next step: before you trust a source, jot one note on the author's purpose and audience — you'll know you've got it when your analysis names a possible bias.",
+    { type: 'growth', area: 'primary-source', objective: 'source-analysis', tone: 'direct' },
+  ),
+
+  // ---- DBQ writing ----
+  entry(
+    'seed-dbq-success-1',
+    "{name}, your DBQ on {cer_topic} grouped the documents into clear categories and used each one as evidence instead of just listing them. That's a real step up in historical writing.",
+    { type: 'success', area: 'dbq', objective: 'argumentation', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-dbq-growth-1',
+    "{name}, your DBQ used the documents well, but a few sat in your essay without explanation. Next step: after each quote, add one sentence starting 'This shows…' — you'll know it's working when every document does a job in your argument.",
+    { type: 'growth', area: 'dbq', objective: 'argumentation', tone: 'direct' },
+  ),
+  entry(
+    'seed-dbq-growth-2',
+    "{name}, right now your DBQ leans on the documents but rarely brings in outside knowledge from class. A good next step is to add one piece of evidence we learned that isn't in the packet — that's what moves a DBQ from solid to strong.",
+    { type: 'growth', area: 'dbq', objective: 'evidence', tone: 'warm' },
+  ),
+
+  // ---- Thesis & claims ----
+  entry(
+    'seed-thesis-skill-1',
+    "{name}, you've learned to write a thesis that actually takes a position instead of restating the question. On {assignment}, your opening line told me your whole argument in one sentence.",
+    { type: 'skill', area: 'thesis', objective: 'argumentation', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-thesis-growth-1',
+    "{name}, your thesis statements tell me your topic but not yet your stance. Next step: make your thesis answer 'so what was the most important reason?' — you'll know you've nailed it when someone could disagree with the sentence you wrote.",
+    { type: 'growth', area: 'thesis', objective: 'argumentation', tone: 'direct' },
+  ),
+
+  // ---- Geography & map skills ----
+  entry(
+    'seed-geography-success-1',
+    "{name}, your map work on {unit} was careful and accurate — you labeled clearly, used the key, and could explain how geography shaped the events we studied. Map skills like yours make history make sense.",
+    { type: 'success', area: 'geography', objective: 'map-skills', tone: 'warm' },
+  ),
+  entry(
+    'seed-geography-growth-1',
+    "{name}, you can read a map well, but I'd love to see you use it to explain why events happened where they did. Next step: when you label a region, add a note on how its rivers, mountains, or coastlines shaped the story — that's geographic thinking, not just locating.",
+    { type: 'growth', area: 'geography', objective: 'map-skills', tone: 'encouraging' },
+  ),
+
+  // ---- Chronology & cause-effect ----
+  entry(
+    'seed-chronology-skill-1',
+    "{name}, you've gotten good at putting events in order and seeing how one led to the next — on our {unit} timeline you spotted a cause-and-effect chain that even tripped up the class.",
+    { type: 'skill', area: 'chronology', objective: 'cause-effect', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-chronology-growth-1',
+    "{name}, you can list what happened, but the next step is showing how one event caused the next. Try connecting two events with 'which led to…' in your notes — you'll know it's clicking when your timeline reads like a story, not a list of dates.",
+    { type: 'growth', area: 'chronology', objective: 'cause-effect', tone: 'direct' },
+  ),
+
+  // ---- Civics & citizenship ----
+  entry(
+    'seed-civics-success-1',
+    "{name}, in our {debate_topic} simulation you explained how the branches of government check each other clearly enough that classmates turned to you for help. You really understand how our system is built.",
+    { type: 'success', area: 'civics', objective: 'civic-knowledge', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-civics-skill-1',
+    "{name}, you've grown into someone who connects what we learn about government to the real world — this week you tied {personal_detail} back to a right in the Constitution. That's civic thinking in action.",
+    { type: 'skill', area: 'civics', objective: 'civic-knowledge', tone: 'warm' },
+  ),
+  entry(
+    'seed-civics-growth-1',
+    "{name}, you know the facts about how government works; the next step is using them to take a reasoned position. Try answering 'what should happen and why?' in your civics responses — you'll know you're there when you back an opinion with a constitutional principle.",
+    { type: 'growth', area: 'civics', objective: 'civic-reasoning', tone: 'direct' },
+  ),
+
+  // ---- Current events / connecting past to present ----
+  entry(
+    'seed-current-events-success-1',
+    "{name}, you have a real gift for connecting history to today — this week you linked {personal_detail} to what we'd studied, and it sparked one of our best discussions of the unit.",
+    { type: 'success', area: 'current-events', objective: 'relevance', tone: 'warm' },
+  ),
+  entry(
+    'seed-current-events-growth-1',
+    "{name}, you follow the news closely, which is great — the next step is backing your take with evidence the way we do with history. Try citing one source or fact when you share a current event, and you'll know it's working when classmates ask 'where'd you read that?'",
+    { type: 'growth', area: 'current-events', objective: 'relevance', tone: 'encouraging' },
+  ),
+
+  // ---- Presentations ----
+  entry(
+    'seed-presentation-success-1',
+    "{name}, your {assignment} presentation was clear and confident — you made eye contact, paced yourself, and clearly knew your material instead of reading slides. I could tell you'd prepared.",
+    { type: 'success', area: 'presentation', objective: 'public-speaking', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-presentation-growth-1',
+    "{name}, your presentation content was strong, but you read most of it from your notes. Next step: practice once out loud so you can look up and talk to your audience — you'll know it's better when you only glance at your notes instead of reading them.",
+    { type: 'growth', area: 'presentation', objective: 'public-speaking', tone: 'warm' },
+  ),
+
+  // ---- Note-taking ----
+  entry(
+    'seed-note-taking-skill-1',
+    "{name}, your notes have become a tool you actually use — organized, in your own words, and easy to study from. I noticed you {personal_detail}, and it's clearly paying off in your work.",
+    { type: 'skill', area: 'note-taking', objective: 'organization', tone: 'warm' },
+  ),
+  entry(
+    'seed-note-taking-growth-1',
+    "{name}, right now you copy notes word for word, which makes it hard to find what matters later. Next step: try writing each main idea in your own words and starring the key term — you'll know it's working when you can study from a glance instead of rereading everything.",
+    { type: 'growth', area: 'note-taking', objective: 'organization', tone: 'direct' },
+  ),
+
+  // ---- Academic vocabulary ----
+  entry(
+    'seed-vocabulary-success-1',
+    "{name}, you've started using our history vocabulary naturally in writing and discussion — words like the ones from {unit} show up correctly in your work, not just on the quiz. That precision makes your ideas sharper.",
+    { type: 'success', area: 'vocabulary', objective: 'academic-language', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-vocabulary-growth-1',
+    "{name}, you know our unit vocabulary on the quiz, but it rarely shows up when you write or talk. Next step: challenge yourself to use one new term per paragraph — you'll know it's sticking when the words feel natural instead of forced.",
+    { type: 'growth', area: 'vocabulary', objective: 'academic-language', tone: 'warm' },
+  ),
+
+  // ---- CER (more, mid-year + paired) ----
+  entry(
+    'seed-cer-success-2',
+    "{name}, this week your CER on {cer_topic} had a claim I could argue with and evidence that actually backed it up. You're getting the hang of writing like a historian.",
+    { type: 'success', area: 'cer', objective: 'argumentation', tone: 'encouraging' },
+  ),
+  entry(
+    'seed-cer-growth-2',
+    "{name}, your CER evidence is solid, but your reasoning often repeats the evidence instead of explaining it. Next step: after your evidence, ask yourself 'why does this prove my claim?' and write that — you'll know it's working when the reasoning says something the quote didn't.",
+    { type: 'growth', area: 'cer', objective: 'reasoning', tone: 'direct' },
+  ),
+
+  // ---- Discussion (more, mid-year) ----
+  entry(
+    'seed-discussion-skill-1',
+    "{name}, you've learned to build on what classmates say instead of just waiting your turn — in our {debate_topic} seminar you said 'building on that…' and took someone's idea further. That's true discussion.",
+    { type: 'skill', area: 'discussion', objective: 'participation', tone: 'warm' },
+  ),
+  entry(
+    'seed-discussion-growth-2',
+    "{name}, you share strong opinions in discussion; the next step is grounding them in evidence from our reading. Try starting with 'the document says…' before your opinion — you'll know it's working when classmates can see where your idea came from.",
+    { type: 'growth', area: 'discussion', objective: 'evidence', tone: 'encouraging' },
+  ),
+
+  // ---- Research (more, mid-year) ----
+  entry(
+    'seed-research-growth-2',
+    "{name}, this quarter your research on {research_topic} relied mostly on one source. Next step: find a second source that confirms or challenges the first before you write — you'll know your research is solid when two sources agree, or when you can explain why they don't.",
+    { type: 'growth', area: 'research', objective: 'source-analysis', tone: 'direct' },
+  ),
+
+  // ---- Professionalism / organization (more) ----
+  entry(
+    'seed-professionalism-growth-2',
+    "{name}, your binder and missing-work tracking slipped this quarter, which made things harder than they needed to be. Next step: do a two-minute folder check at the end of each class — you'll know it's working when you can find any assignment without searching.",
+    { type: 'growth', area: 'professionalism', objective: 'organization', tone: 'warm' },
+  ),
+  entry(
+    'seed-professionalism-success-2',
+    "{name}, I want to recognize how you used class work time this quarter — focused, organized, and starting without being told. That self-management is a skill that will carry you everywhere. Reach me anytime at {teacher_email} if you want to keep building on it.",
+    { type: 'success', area: 'professionalism', objective: 'self-management', tone: 'encouraging' },
+  ),
+
+  // ---- Collaboration (more, mid-year) ----
+  entry(
+    'seed-collaboration-skill-1',
+    "{name}, during {project_name} you got better at sharing the work fairly and keeping your group on task without taking over. That balance of leading and listening is hard to do, and you're doing it.",
+    { type: 'skill', area: 'collaboration', objective: 'teamwork', tone: 'warm' },
+  ),
+
+  // ---- Primary source (more, behavior of close reading) ----
+  entry(
+    'seed-primary-source-growth-2',
+    "{name}, you read our documents quickly and miss details that change their meaning. Next step: read each source twice — once for the gist, once with a pencil to mark surprising words — and you'll know it's working when you catch something the first read hid.",
+    { type: 'growth', area: 'primary-source', objective: 'close-reading', tone: 'warm' },
+  ),
+
+  // ---- Thesis (paired success) ----
+  entry(
+    'seed-thesis-success-1',
+    "{name}, your thesis on {cer_topic} this week did real work — it took a clear side and previewed your reasons. That one strong sentence set up your whole essay.",
+    { type: 'success', area: 'thesis', objective: 'argumentation', tone: 'encouraging' },
+  ),
+
+  // ---- DBQ (paired skill) ----
+  entry(
+    'seed-dbq-skill-1',
+    "{name}, you've learned to weave documents into a real argument rather than answering them one by one. On {assignment} your essay read like a case you were making, and that's the goal.",
+    { type: 'skill', area: 'dbq', objective: 'argumentation', tone: 'warm' },
+  ),
+
+  // ---- Chronology (paired success) ----
+  entry(
+    'seed-chronology-success-1',
+    "{name}, your timeline for {unit} was accurate and clear, and you could explain not just the order of events but why they unfolded the way they did. That sense of sequence is a historian's tool.",
+    { type: 'success', area: 'chronology', objective: 'cause-effect', tone: 'encouraging' },
+  ),
+
+  // ---- Geography (paired skill) ----
+  entry(
+    'seed-geography-skill-1',
+    "{name}, you've started using maps to explain history, not just to find places — this week you connected {personal_detail} to the geography of the region. That's a big step.",
+    { type: 'skill', area: 'geography', objective: 'map-skills', tone: 'warm' },
+  ),
+
+  // ---- Note-taking (paired success) ----
+  entry(
+    'seed-note-taking-success-1',
+    "{name}, your notes this quarter were a model — organized, selective, and genuinely useful for studying. When you used them on the {assignment}, it showed.",
+    { type: 'success', area: 'note-taking', objective: 'organization', tone: 'encouraging' },
+  ),
+
+  // ---- Current events (paired skill) ----
+  entry(
+    'seed-current-events-skill-1',
+    "{name}, you've gotten good at spotting the history behind today's headlines — you brought in something you'd read and tied it straight to {cer_topic}. Keep making those connections.",
+    { type: 'skill', area: 'current-events', objective: 'relevance', tone: 'warm' },
+  ),
+
+  // ---- Presentation (paired skill) ----
+  entry(
+    'seed-presentation-skill-1',
+    "{name}, your speaking has grown a lot this year — you're calmer at the front of the room and you explain your slides instead of reading them. On {assignment} that confidence really came through.",
+    { type: 'skill', area: 'presentation', objective: 'public-speaking', tone: 'encouraging' },
+  ),
+
+  // ---- Vocabulary (paired skill) ----
+  entry(
+    'seed-vocabulary-skill-1',
+    "{name}, you've built a real bank of history vocabulary and you reach for it when you write — using the right term from {unit} made your last argument noticeably clearer.",
+    { type: 'skill', area: 'vocabulary', objective: 'academic-language', tone: 'warm' },
+  ),
+
+  // ---- Civics (paired, present-tense) ----
+  entry(
+    'seed-civics-growth-2',
+    "{name}, you have strong opinions about fairness and government, which is great — the next step is grounding them in how the system actually works. Try naming the branch or right involved when you argue a point, and you'll know it's landing when your case sounds like a citizen's, not just a complaint.",
+    { type: 'growth', area: 'civics', objective: 'civic-reasoning', tone: 'encouraging' },
+  ),
 ];
 
 // Stable identity for idempotent install: the entry's own id.

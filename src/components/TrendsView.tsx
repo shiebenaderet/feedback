@@ -1,15 +1,74 @@
 import type { TrendsSummary } from '../feedback/aggregateTrends';
 import { GRADING_PERIODS } from '../feedback/taxonomy';
-import { tokens, cardStyle, periodChipStyle } from '../ui/theme';
+import { tokens, cardStyle, periodChipStyle, chipStyle } from '../ui/theme';
 
 export interface TrendsViewProps {
   summary: TrendsSummary;
+  /** Optional unit filter. When provided, a chip row is rendered above trends. */
+  units?: string[];
+  /** The currently selected unit, or null for "All units". */
+  selectedUnit?: string | null;
+  /** Called with the chosen unit (null === All units). */
+  onSelectUnit?: (unit: string | null) => void;
+}
+
+/** Filter chips for unit slicing. "All units" first, then each distinct unit. */
+function UnitFilter({
+  units,
+  selectedUnit,
+  onSelectUnit,
+}: {
+  units: string[];
+  selectedUnit: string | null;
+  onSelectUnit: (unit: string | null) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Filter by unit"
+      style={{ display: 'flex', gap: tokens.space(1), flexWrap: 'wrap', alignItems: 'center' }}
+    >
+      <button
+        type="button"
+        style={chipStyle(selectedUnit === null)}
+        aria-pressed={selectedUnit === null}
+        onClick={() => onSelectUnit(null)}
+      >
+        All units
+      </button>
+      {units.map((u) => (
+        <button
+          key={u}
+          type="button"
+          style={chipStyle(selectedUnit === u)}
+          aria-pressed={selectedUnit === u}
+          onClick={() => onSelectUnit(u)}
+        >
+          {u}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /** Presentational rendering of a TrendsSummary. No data loading. */
-export function TrendsView({ summary }: TrendsViewProps) {
+export function TrendsView({ summary, units, selectedUnit, onSelectUnit }: TrendsViewProps) {
+  const showUnitFilter = units != null && units.length > 0 && onSelectUnit != null;
+  const filter = showUnitFilter ? (
+    <UnitFilter
+      units={units}
+      selectedUnit={selectedUnit ?? null}
+      onSelectUnit={onSelectUnit}
+    />
+  ) : null;
+
   if (summary.total === 0) {
-    return <p style={{ color: tokens.color.muted }}>No feedback yet.</p>;
+    return (
+      <div style={{ display: 'grid', gap: tokens.space(2) }}>
+        {filter}
+        <p style={{ color: tokens.color.muted }}>No feedback yet.</p>
+      </div>
+    );
   }
 
   // Grading periods rendered in canonical taxonomy order, present ones only.
@@ -17,6 +76,7 @@ export function TrendsView({ summary }: TrendsViewProps) {
 
   return (
     <div style={{ display: 'grid', gap: tokens.space(2) }}>
+      {filter}
       <p style={{ color: tokens.color.subtle, margin: 0 }}>
         {summary.total} pieces of feedback
       </p>

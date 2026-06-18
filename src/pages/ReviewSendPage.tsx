@@ -23,7 +23,7 @@ import type { Batch, BankEntry, MessageDraft } from '../types';
 import type { GmailSender } from '../send/batchSendMachine';
 import { tokens, panelStyle } from '../ui/theme';
 
-const SUBJECT = 'Feedback on your work';
+const DEFAULT_SUBJECT = 'Feedback on your work';
 
 export interface ReviewSendPageDeps {
   uid: string;
@@ -62,6 +62,9 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
   const [batch, setBatch] = useState<Batch | null>(null);
   const [messages, setMessages] = useState<MessageDraft[]>([]);
   const [emailById, setEmailById] = useState<Record<string, string>>({});
+  const [roster, setRoster] = useState<{ id: string; name: string }[]>([]);
+  const [subject, setSubject] = useState(DEFAULT_SUBJECT);
+  const [unit, setUnit] = useState('');
   const [bankEntries, setBankEntries] = useState<BankEntry[]>([]);
   const [gp, setGp] = useState<GradingPeriodValue>({
     gradingPeriod: GRADING_PERIODS[0],
@@ -85,11 +88,13 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
         setBatch(b);
         setMessages(msgs);
         setEmailById(Object.fromEntries(roster.map((s) => [s.id, s.email])));
+        setRoster(roster.map((s) => ({ id: s.id, name: s.name })));
         setBankEntries(entries as BankEntry[]);
         setGp({
           gradingPeriod: (b.gradingPeriod ?? GRADING_PERIODS[0]) as GradingPeriod,
           label: b.label ?? '',
         });
+        setUnit(b.unit ?? '');
       } catch {
         if (alive) setError('Could not load this batch.');
       }
@@ -112,11 +117,20 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
     [uid, batchId],
   );
 
+  const onUnitChange = useCallback(
+    (value: string) => {
+      setUnit(value);
+      void api.updateBatch(db, uid, batchId, { unit: value } as Partial<Batch>);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [uid, batchId],
+  );
+
   // Mode A sender: injected in tests, else the real Gmail sender from the token.
   const sendOne: GmailSender = useMemo(() => {
     if (deps?.sendOne) return deps.sendOne;
-    return createGmailSender({ accessToken: token ?? '', from: email, subject: SUBJECT });
-  }, [deps?.sendOne, token, email]);
+    return createGmailSender({ accessToken: token ?? '', from: email, subject });
+  }, [deps?.sendOne, token, email, subject]);
 
   const runSend = useMemo(
     () => makeRunSend(sendOne, (id) => emailById[id] ?? ''),
@@ -131,12 +145,30 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
       tree: { yearId: batch.yearId, courseId: batch.courseId, periodId: batch.periodId },
       gradingPeriod: gp.gradingPeriod,
       label: gp.label,
+      unit,
       bankEntries,
       batchId: batch.id,
       writeFeedbackHistory: api.writeFeedbackHistory,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batch, uid, gp.gradingPeriod, gp.label, bankEntries]);
+  }, [batch, uid, gp.gradingPeriod, gp.label, unit, bankEntries]);
+
+  // Roster students with NO draft, or whose draft is empty/whitespace-only, will
+  // not receive feedback — surface them so nothing is silently skipped.
+  const unmessagedNames = useMemo(() => {
+    const byStudent = new Map(messages.map((m) => [m.studentId, m]));
+    // Quick rounds target only a subset; don't warn about students this round
+    // was never meant to include.
+    const targets = batch?.targetStudentIds;
+    const considered =
+      targets && targets.length > 0 ? roster.filter((s) => targets.includes(s.id)) : roster;
+    return considered
+      .filter((s) => {
+        const draft = byStudent.get(s.id);
+        return !draft || draft.finalText.trim().length === 0;
+      })
+      .map((s) => s.name);
+  }, [roster, messages, batch?.targetStudentIds]);
 
   if (error)
     return (
@@ -200,6 +232,53 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
           onChange={onGpChange}
         />
 
+        <label style={{ display: 'block', margin: `${tokens.space(2)}px 0` }}>
+          <span style={{ display: 'block', fontSize: 13, color: tokens.color.muted, marginBottom: 4 }}>
+            Subject
+          </span>
+          <input
+            type="text"
+            aria-label="Subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              background: tokens.color.panelAlt,
+              color: tokens.color.text,
+              border: `1px solid ${tokens.color.border}`,
+              borderRadius: tokens.radius.md,
+              padding: '8px 12px',
+              fontSize: 15,
+              fontFamily: tokens.font,
+            }}
+          />
+        </label>
+
+        <label style={{ display: 'block', margin: `${tokens.space(2)}px 0` }}>
+          <span style={{ display: 'block', fontSize: 13, color: tokens.color.muted, marginBottom: 4 }}>
+            Unit / topic (optional — stamped on each student's history)
+          </span>
+          <input
+            type="text"
+            aria-label="Unit"
+            value={unit}
+            onChange={(e) => onUnitChange(e.target.value)}
+            placeholder="e.g. The American Revolution"
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              background: tokens.color.panelAlt,
+              color: tokens.color.text,
+              border: `1px solid ${tokens.color.border}`,
+              borderRadius: tokens.radius.md,
+              padding: '8px 12px',
+              fontSize: 15,
+              fontFamily: tokens.font,
+            }}
+          />
+        </label>
+
         <ReviewScreenContainer
           batch={batch}
           messages={messages}
@@ -209,6 +288,9 @@ export function ReviewSendPage({ deps }: { deps?: Partial<ReviewSendPageDeps> })
             api.setBatchStatus(db, uid, batchId, status as 'sending' | 'sent')
           }
           onSent={onSent}
+          emailById={emailById}
+          unmessagedNames={unmessagedNames}
+          subject={subject}
         />
 
         <p style={{ marginTop: 24 }}>

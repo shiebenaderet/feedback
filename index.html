@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Feedback Emails</title>
+    <script>
+      // Apply the saved theme before first paint so light-mode users never
+      // see a dark flash on load. Mirrors src/ui/useTheme.ts.
+      try {
+        if (localStorage.getItem('feedback-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {
+        /* localStorage unavailable — fall back to the default dark theme */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

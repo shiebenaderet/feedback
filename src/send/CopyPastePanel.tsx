@@ -6,6 +6,8 @@ export interface CopyPasteMessage {
   name: string;
   email: string;
   finalText: string;
+  /** Optional email subject line, surfaced so Mode-B users can see/copy it. */
+  subject?: string;
 }
 
 export interface CopyPastePanelProps {

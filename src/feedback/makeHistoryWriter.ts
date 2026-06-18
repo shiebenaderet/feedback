@@ -15,6 +15,8 @@ export interface MakeHistoryWriterArgs {
   tree: HistoryTree;
   gradingPeriod: GradingPeriod;
   label: string;
+  /** Optional unit/topic stamped onto each history entry for the round. */
+  unit?: string;
   bankEntries: BankEntry[];
   /** The round's batch id — makes each history write idempotent per student. */
   batchId: string;
@@ -38,6 +40,7 @@ export function makeHistoryWriter({
   tree,
   gradingPeriod,
   label,
+  unit,
   bankEntries,
   batchId,
   now = Date.now,
@@ -52,6 +55,7 @@ export function makeHistoryWriter({
         tree,
         gradingPeriod,
         label,
+        unit,
         sentAt: now(),
         batchId,
       });

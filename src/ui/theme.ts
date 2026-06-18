@@ -4,16 +4,16 @@ import type { CSSProperties } from 'react';
  *  Hex values are lifted verbatim from src/pages/LandingPage.tsx. */
 export const tokens = {
   color: {
-    bg: '#0d0d0f',
-    panel: '#15171c',
-    panelAlt: '#1a1d23',
-    teal: '#5fb8a8',
-    tealInk: '#0d1311', // dark ink that sits on the teal accent
-    text: '#e7e9ee',
-    muted: '#9aa1ad',
-    subtle: '#b8bcc6',
-    border: '#23262e',
-    danger: '#ff8a8a',
+    bg: 'var(--bg, #0d0d0f)',
+    panel: 'var(--panel, #15171c)',
+    panelAlt: 'var(--panel-alt, #1a1d23)',
+    teal: 'var(--teal, #5fb8a8)',
+    tealInk: 'var(--teal-ink, #0d1311)', // ink that sits on the teal accent
+    text: 'var(--text, #e7e9ee)',
+    muted: 'var(--muted, #9aa1ad)',
+    subtle: 'var(--subtle, #b8bcc6)',
+    border: 'var(--border, #23262e)',
+    danger: 'var(--danger, #ff8a8a)',
   },
   font: 'system-ui, -apple-system, "Segoe UI", sans-serif',
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
@@ -134,7 +134,7 @@ export function breadcrumbStyle(): CSSProperties {
 /** The "›" separator between crumbs — subtler than the crumbs themselves. */
 export function breadcrumbSepStyle(): CSSProperties {
   return {
-    color: tokens.color.border,
+    color: tokens.color.muted,
     fontSize: 13,
     userSelect: 'none',
   };

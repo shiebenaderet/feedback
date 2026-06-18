@@ -3,14 +3,43 @@
    look without per-component work. Palette mirrors src/ui/theme.ts. */
 
 :root {
+  /* Dark theme — the default. Mirrors src/ui/theme.ts. */
   --bg: #0d0d0f;
   --panel: #15171c;
   --panel-alt: #1a1d23;
   --teal: #5fb8a8;
   --teal-ink: #0d1311;
+  --teal-hover: #6cc6b6;
   --text: #e7e9ee;
   --muted: #9aa1ad;
+  --subtle: #b8bcc6;
   --border: #23262e;
+  --border-hover: #3a3f4b;
+  --danger: #ff8a8a;
+  --danger-border: #4a2a2a;
+  --danger-bg: #2a1a1a;
+  --placeholder: #828892;
+}
+
+/* Light theme — opt in via <html data-theme="light">.
+   Palette tuned for WCAG-AA: text 15.9:1, muted 5.9:1, subtle 9.2:1,
+   teal-as-text 4.8:1 on bg, white ink on teal button 5.1:1, danger 6.2:1. */
+:root[data-theme='light'] {
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --panel-alt: #eef0f4;
+  --teal: #2c7a6e;
+  --teal-ink: #ffffff;
+  --teal-hover: #25685e;
+  --text: #1a1d23;
+  --muted: #5a6170;
+  --subtle: #3f444f;
+  --border: #d9dde4;
+  --border-hover: #b9bfca;
+  --danger: #b3261e;
+  --danger-border: #e6b4b1;
+  --danger-bg: #f7e3e2;
+  --placeholder: #5f6573;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -60,7 +89,7 @@ select:focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 2px rgba(95, 184, 168, 0.18);
 }
-input::placeholder, textarea::placeholder { color: #6e7480; }
+input::placeholder, textarea::placeholder { color: var(--placeholder); }
 
 textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
 
@@ -92,7 +121,7 @@ button {
   cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease;
 }
-button:hover:not(:disabled) { border-color: #3a3f4b; }
+button:hover:not(:disabled) { border-color: var(--border-hover); }
 button:disabled { opacity: 0.5; cursor: default; }
 
 button.accent,
@@ -103,10 +132,10 @@ button[type='submit'] {
   font-weight: 600;
 }
 button.accent:hover:not(:disabled),
-button[type='submit']:hover:not(:disabled) { background: #6cc6b6; }
+button[type='submit']:hover:not(:disabled) { background: var(--teal-hover); }
 
-button.danger { color: #ff8a8a; border-color: #4a2a2a; }
-button.danger:hover:not(:disabled) { background: #2a1a1a; }
+button.danger { color: var(--danger); border-color: var(--danger-border); }
+button.danger:hover:not(:disabled) { background: var(--danger-bg); }
 
 /* Tables (roster) */
 table { border-collapse: collapse; width: 100%; margin-top: 12px; }
@@ -127,4 +156,4 @@ ul { padding-left: 0; }
 section ul, nav ul { list-style: none; margin: 0; }
 
 /* role=alert error text */
-[role='alert'] { color: #ff8a8a; }
+[role='alert'] { color: var(--danger); }

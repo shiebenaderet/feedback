@@ -23,14 +23,23 @@ export interface ReviewScreenContainerProps {
   setBatchStatus: (status: Batch['status']) => Promise<void> | void;
   /** Writes the durable feedbackHistory entry for each sent message. */
   onSent?: OnSent;
+  /** Resolves each student's recipient address by studentId. */
+  emailById?: Record<string, string>;
+  /** Roster students with no message — surfaced as a skipped-student warning. */
+  unmessagedNames?: string[];
+  /** Shared email subject line; surfaced in copy-paste (Mode B). */
+  subject?: string;
 }
 
 /** MessageDraft has no email; the container resolves it from a lookup if available. */
-function toReviewMessages(drafts: MessageDraft[]): ReviewMessage[] {
+function toReviewMessages(
+  drafts: MessageDraft[],
+  emailById: Record<string, string>,
+): ReviewMessage[] {
   return drafts.map((d) => ({
     id: d.studentId,
     name: d.name,
-    email: '',
+    email: emailById[d.studentId] ?? '',
     finalText: d.finalText,
   }));
 }
@@ -38,11 +47,12 @@ function toReviewMessages(drafts: MessageDraft[]): ReviewMessage[] {
 function toCopyPasteMessages(
   drafts: MessageDraft[],
   sharedHeader: string,
+  emailById: Record<string, string>,
 ): CopyPasteMessage[] {
   return drafts.map((d) => ({
     id: d.studentId,
     name: d.name,
-    email: '',
+    email: emailById[d.studentId] ?? '',
     finalText: sharedHeader ? `${sharedHeader}\n\n${d.finalText}` : d.finalText,
   }));
 }
@@ -62,6 +72,9 @@ export function ReviewScreenContainer({
   runSend,
   setBatchStatus,
   onSent,
+  emailById = {},
+  unmessagedNames = [],
+  subject,
 }: ReviewScreenContainerProps) {
   const [results, setResults] = useState<MessageDraft[]>(messages);
   const [sending, setSending] = useState(false);
@@ -126,7 +139,11 @@ export function ReviewScreenContainer({
 
   return (
     <div>
-      <ReviewScreen messages={toReviewMessages(results)} onConfirm={onConfirm} />
+      <ReviewScreen
+        messages={toReviewMessages(results, emailById)}
+        onConfirm={onConfirm}
+        unmessagedNames={unmessagedNames}
+      />
 
       {showProgress && (
         <div role="status" aria-label="send progress">
@@ -140,17 +157,14 @@ export function ReviewScreenContainer({
       {mode === 'B' && showCopyPaste && (
         <div data-testid="copy-paste-panel">
           <SendStepper
-            messages={toCopyPasteMessages(results, batch.sharedHeader)}
+            messages={toCopyPasteMessages(results, batch.sharedHeader, emailById)}
             sent={sentInCopyPaste}
             onMarkSent={markSent}
             onMarkAllSent={markAllSent}
+            subject={subject}
           />
         </div>
       )}
-
-      <button type="button" onClick={onConfirm}>
-        Send all
-      </button>
     </div>
   );
 }

@@ -14,7 +14,47 @@ function makeMessages(): MessageDraft[] {
   ];
 }
 
+/** Drives the gated send flow: tick "reviewed all", then click the (gated)
+ *  confirm button. The old ungated "Send all" button was removed because it
+ *  bypassed the safety checkboxes. */
+function confirmAndSend() {
+  fireEvent.click(screen.getByLabelText(/reviewed all/i));
+  fireEvent.click(screen.getByRole('button', { name: /confirm and continue to send/i }));
+}
+
 describe('ReviewScreenContainer', () => {
+  it('populates each recipient email from the emailById lookup', () => {
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="A"
+        runSend={vi.fn()}
+        setBatchStatus={vi.fn(async () => {})}
+        emailById={{ s1: 'ana@school.edu', s2: 'ben@school.edu' }}
+      />,
+    );
+    expect(screen.getByText('ana@school.edu')).toBeInTheDocument();
+    expect(screen.getByText('ben@school.edu')).toBeInTheDocument();
+  });
+
+  it('passes the subject into the copy-paste stepper (Mode B)', async () => {
+    render(
+      <ReviewScreenContainer
+        batch={makeBatch()}
+        messages={makeMessages()}
+        mode="B"
+        runSend={vi.fn()}
+        setBatchStatus={vi.fn(async () => {})}
+        emailById={{ s1: 'ana@school.edu', s2: 'ben@school.edu' }}
+        subject="Term 2 feedback"
+      />,
+    );
+    confirmAndSend();
+    await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
+    expect(screen.getByText(/Subject: Term 2 feedback/)).toBeInTheDocument();
+  });
+
   it('Mode A: confirm calls setBatchStatus("sending") then runSend, then setBatchStatus("sent")', async () => {
     const calls: string[] = [];
     const setBatchStatus = vi.fn(async (status: Batch['status']) => { calls.push('status:' + status); });
@@ -35,7 +75,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
 
     await waitFor(() => expect(runSend).toHaveBeenCalledTimes(1));
     // ordering: status('sending') is set BEFORE runSend is invoked
@@ -61,7 +101,7 @@ describe('ReviewScreenContainer', () => {
     );
 
     expect(screen.queryByTestId('copy-paste-panel')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
 
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
     expect(runSend).not.toHaveBeenCalled();
@@ -88,7 +128,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
 
     await waitFor(() => expect(onSent).toHaveBeenCalledTimes(2));
     expect(onSent.mock.calls.map((c) => (c[0] as MessageDraft).studentId)).toEqual(['s1', 's2']);
@@ -114,7 +154,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(onSent).toHaveBeenCalledTimes(1));
     expect((onSent.mock.calls[0][0] as MessageDraft).studentId).toBe('s2');
   });
@@ -132,7 +172,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
 
     fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i }));
@@ -153,7 +193,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
 
     fireEvent.click(screen.getByRole('button', { name: /mark all sent/i }));
@@ -173,7 +213,7 @@ describe('ReviewScreenContainer', () => {
         onSent={vi.fn(async () => {})}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /mark all sent/i }));
     await waitFor(() => expect(setBatchStatus).toHaveBeenCalledWith('sent'));
@@ -191,7 +231,7 @@ describe('ReviewScreenContainer', () => {
         onSent={vi.fn(async () => {})}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
 
     fireEvent.click(screen.getByRole('button', { name: /mark sent & next/i })); // s1
@@ -214,7 +254,7 @@ describe('ReviewScreenContainer', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /send all/i }));
+    confirmAndSend();
     await waitFor(() => expect(screen.getByTestId('copy-paste-panel')).toBeTruthy());
 
     // mark s1 sent, advance, go back, mark s1 again — history must not double-write.

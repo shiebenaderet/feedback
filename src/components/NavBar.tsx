@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { signOutTeacher } from '../auth/authService';
 import { tokens, tealButtonStyle, navBarStyle } from '../ui/theme';
+import { useTheme } from '../ui/useTheme';
 
 /**
  * App chrome shown on every signed-in page: the "Feedback" wordmark (links Home)
@@ -9,6 +10,8 @@ import { tokens, tealButtonStyle, navBarStyle } from '../ui/theme';
  */
 export function NavBar() {
   const linkStyle = { color: tokens.color.subtle, fontWeight: 600, textDecoration: 'none' };
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
   return (
     <header style={navBarStyle()}>
       <Link
@@ -25,6 +28,24 @@ export function NavBar() {
           Bank
         </Link>
       </nav>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+        title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+        style={{
+          background: 'transparent',
+          color: tokens.color.subtle,
+          border: `1px solid ${tokens.color.border}`,
+          borderRadius: tokens.radius.md,
+          padding: '6px 10px',
+          fontSize: 14,
+          lineHeight: 1,
+          cursor: 'pointer',
+        }}
+      >
+        {isDark ? '☀' : '☾'}
+      </button>
       <button
         type="button"
         onClick={() => void signOutTeacher()}

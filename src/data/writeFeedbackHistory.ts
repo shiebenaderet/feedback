@@ -33,6 +33,8 @@ export interface WriteFeedbackHistoryArgs {
   gradingPeriod: GradingPeriod;
   /** Optional free-text label for the round; omitted from the doc when empty. */
   label: string;
+  /** Optional unit/topic for the round; omitted from the doc when empty. */
+  unit?: string;
   /** Timestamp (ms) the round went out; injected for deterministic tests. */
   sentAt: number;
   /**
@@ -63,7 +65,7 @@ export async function writeFeedbackHistory(
   deps: FirestoreWriteDeps = defaultDeps,
 ): Promise<string> {
   const { doc, setDoc } = deps;
-  const { draft, bankEntries, tree, gradingPeriod, label, sentAt, batchId } = args;
+  const { draft, bankEntries, tree, gradingPeriod, label, unit, sentAt, batchId } = args;
 
   const byId = new Map(bankEntries.map((e) => [e.id, e]));
   const resolved = draft.usedEntries
@@ -90,6 +92,7 @@ export async function writeFeedbackHistory(
     usedEntries: draft.usedEntries,
   };
   if (label) entry.label = label;
+  if (unit) entry.unit = unit;
 
   // Deterministic id keyed by the round → idempotent re-writes (no duplicates).
   const entryId = `${batchId}__${draft.studentId}`;

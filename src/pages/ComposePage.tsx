@@ -8,7 +8,6 @@ import { saveMessageDraft, listMessages } from '../firebase/messages';
 import { resolveActiveYear } from '../data/activeYear';
 import { loadComposeData, type ComposeData } from './loadComposeData';
 import { ComposeScreen } from '../compose/ComposeScreen';
-import { ComposeHistoryPanel } from '../compose/ComposeHistoryPanel';
 import { NavBar } from '../components/NavBar';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { listStudentHistory } from '../data/listStudentHistory';
@@ -60,6 +59,11 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const [drafts, setDrafts] = useState<Record<string, MessageDraft>>({});
   const [studentHistory, setStudentHistory] = useState<FeedbackHistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Quick-round targeting. `targetIds` (persisted to the batch) is the ACTIVE
+  // subset; `selection` is the in-progress checkbox picks before the teacher
+  // commits a focus round.
+  const [targetIds, setTargetIds] = useState<string[]>([]);
+  const [selection, setSelection] = useState<Set<string>>(new Set());
 
   // createBatch must run EXACTLY once; this guard survives StrictMode double-invoke.
   const batchStarted = useRef(false);
@@ -84,9 +88,15 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         // loses work; only start a fresh batch when there's nothing to resume.
         // Resilient: if the lookup fails (e.g. index still building), fall back
         // to a fresh batch rather than blocking compose.
-        const resume = async (b: { id: string; sharedHeader?: string }) => {
+        const resume = async (b: { id: string; sharedHeader?: string; targetStudentIds?: string[] }) => {
           setBatchId(b.id);
           setSharedHeader(b.sharedHeader ?? '');
+          // Restore an active quick-round subset so a reload keeps the focus.
+          if (alive) {
+            const ids = b.targetStudentIds ?? [];
+            setTargetIds(ids);
+            setSelection(new Set(ids));
+          }
           const saved = await api.listMessages(db, uid, b.id);
           if (alive) setDrafts(Object.fromEntries(saved.map((m) => [m.studentId, m])));
         };
@@ -171,6 +181,41 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
     [uid],
   );
 
+  // Toggle a student in/out of the in-progress quick-round selection.
+  const toggleSelection = useCallback((id: string) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Commit the checkbox selection as the active quick round, persisting it to
+  // the batch (review respects targetStudentIds for its skipped-student warning).
+  const focusRound = useCallback(
+    (ids: string[]) => {
+      setTargetIds(ids);
+      if (!batchId) return;
+      void api.updateBatch(db, uid, batchId, {
+        targetStudentIds: ids,
+      } as Parameters<typeof api.updateBatch>[3]);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [uid, batchId],
+  );
+
+  // Clear the quick round → back to a full-roster round.
+  const clearRound = useCallback(() => {
+    setTargetIds([]);
+    setSelection(new Set());
+    if (!batchId) return;
+    void api.updateBatch(db, uid, batchId, {
+      targetStudentIds: [],
+    } as Parameters<typeof api.updateBatch>[3]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, batchId]);
+
   if (error)
     return (
       <main style={{ maxWidth: 1180, margin: ' 0 auto', padding: tokens.space(4) }}>
@@ -198,6 +243,12 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
   const classMeta: ClassMeta = { id: data.period.id, name: data.period.label };
 
   const pct = progress.total > 0 ? Math.round((progress.doneCount / progress.total) * 100) : 0;
+
+  // Quick round derived state. A round is "focused" when targetIds is non-empty;
+  // only target students count for the focused view (de-emphasize the rest).
+  const targetSet = new Set(targetIds);
+  const quickRoundActive = targetIds.length > 0;
+  const selectedCount = selection.size;
 
   return (
     <>
@@ -261,19 +312,91 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
             >
               <div style={progressFillStyle(pct)} />
             </div>
+
+            {/* Quick round (subset targeting). */}
+            <div
+              data-testid="quick-round-controls"
+              style={{ margin: `0 0 ${tokens.space(2)}px` }}
+            >
+              {quickRoundActive ? (
+                <div style={{ display: 'grid', gap: 4 }}>
+                  <span
+                    data-testid="quick-round-indicator"
+                    style={{ color: tokens.color.teal, fontSize: 13, fontWeight: 600 }}
+                  >
+                    Quick round: {targetIds.length} students
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearRound}
+                    style={{
+                      justifySelf: 'start',
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      color: tokens.color.muted,
+                      border: 'none',
+                      padding: 0,
+                      fontSize: 12,
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Clear quick round
+                  </button>
+                </div>
+              ) : (
+                selectedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => focusRound([...selection])}
+                    style={{
+                      width: '100%',
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      color: tokens.color.teal,
+                      border: `1px solid ${tokens.color.teal}`,
+                      borderRadius: tokens.radius.sm,
+                      padding: '6px 8px',
+                      fontSize: 13,
+                    }}
+                  >
+                    Focus round on {selectedCount} selected
+                  </button>
+                )
+              )}
+            </div>
+
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2 }}>
               {data.students.map((s, i) => {
                 const active = i === index;
                 const done = progress.doneIds.has(s.id);
+                const targeted = targetSet.has(s.id);
+                // De-emphasize non-target students once a quick round is active.
+                const dimmed = quickRoundActive && !targeted;
                 return (
-                  <li key={s.id}>
+                  <li
+                    key={s.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      opacity: dimmed ? 0.45 : 1,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${s.name} for quick round`}
+                      checked={selection.has(s.id)}
+                      onChange={() => toggleSelection(s.id)}
+                      style={{ flexShrink: 0, cursor: 'pointer' }}
+                    />
                     <button
                       type="button"
                       aria-pressed={active}
                       onClick={() => setIndex(i)}
                       style={{
                         display: 'flex',
-                        width: '100%',
+                        flex: 1,
+                        minWidth: 0,
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         textAlign: 'left',
@@ -289,6 +412,19 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
                       <span>{s.name}</span>
                       {done && <span style={{ color: tokens.color.teal }}>✓</span>}
                     </button>
+                    <Link
+                      to={`/student/${s.id}/history?year=${data.yearId}&course=${data.courseId}&period=${periodId}`}
+                      aria-label={`History for ${s.name}`}
+                      style={{
+                        flexShrink: 0,
+                        color: tokens.color.muted,
+                        fontSize: 12,
+                        textDecoration: 'none',
+                        padding: '2px 4px',
+                      }}
+                    >
+                      History
+                    </Link>
                   </li>
                 );
               })}
@@ -305,8 +441,8 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
               entries={data.entries}
               onAutoSave={onAutoSave}
               initialDraft={drafts[student.id]}
+              history={studentHistory}
             />
-            <ComposeHistoryPanel studentName={student.name} entries={studentHistory} />
           </div>
         )}
         </div>
@@ -321,7 +457,22 @@ export function ComposePage({ deps }: { deps?: Partial<ComposePageDeps> }) {
         >
           <button
             type="button"
-            onClick={() => setIndex((i) => nextStudentIndex(i, data.students.length))}
+            onClick={() =>
+              setIndex((i) =>
+                nextStudentIndex(
+                  i,
+                  data.students.length,
+                  // Skip students already done; in a quick round, also skip any
+                  // non-target student so "next" stays within the focused subset.
+                  data.students.reduce<number[]>((acc, s, idx) => {
+                    if (progress.doneIds.has(s.id) || (quickRoundActive && !targetSet.has(s.id))) {
+                      acc.push(idx);
+                    }
+                    return acc;
+                  }, []),
+                ),
+              )
+            }
             style={{ ...tealButtonStyle(), padding: '8px 16px' }}
           >
             Save & next

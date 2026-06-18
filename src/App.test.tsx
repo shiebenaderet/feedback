@@ -34,61 +34,64 @@ function renderAt(path: string, auth: { status: string; user: unknown }) {
 }
 
 describe('AppRoutes', () => {
-  it('shows the landing page at "/" when signed out', () => {
+  it('shows the landing page at "/" when signed out', async () => {
     renderAt('/', { status: 'signedOut', user: null });
+    // Routes are lazy-loaded, so the content resolves asynchronously.
     expect(
-      screen.getByRole('button', { name: /sign in with google/i }),
+      await screen.findByRole('button', { name: /sign in with google/i }),
     ).toBeInTheDocument();
   });
 
-  it('bounces a signed-out deep link to "/home" back to the landing page', () => {
+  it('bounces a signed-out deep link to "/home" back to the landing page', async () => {
     renderAt('/home', { status: 'signedOut', user: null });
     expect(
-      screen.getByRole('button', { name: /sign in with google/i }),
+      await screen.findByRole('button', { name: /sign in with google/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument();
   });
 
-  it('shows the protected home page for a signed-in teacher', () => {
+  it('shows the protected home page for a signed-in teacher', async () => {
     renderAt('/home', {
       status: 'signedIn',
       user: { email: 'teacher@example.com' },
     });
-    expect(screen.getByText(/signed in as teacher@example.com/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/signed in as teacher@example.com/i),
+    ).toBeInTheDocument();
   });
 });
 
 describe('protected compose/review routes', () => {
-  it('renders ComposePage at /compose/:courseId/:periodId when signed in', () => {
+  it('renders ComposePage at /compose/:courseId/:periodId when signed in', async () => {
     useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
     render(
       <MemoryRouter initialEntries={['/course/c1/period/p1/compose']}>
         <AppRoutes />
       </MemoryRouter>,
     );
-    expect(screen.getByText('compose-page')).toBeInTheDocument();
+    expect(await screen.findByText('compose-page')).toBeInTheDocument();
   });
 
-  it('renders ReviewSendPage at /review/:batchId when signed in', () => {
+  it('renders ReviewSendPage at /review/:batchId when signed in', async () => {
     useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
     render(
       <MemoryRouter initialEntries={['/review/b1']}>
         <AppRoutes />
       </MemoryRouter>,
     );
-    expect(screen.getByText('review-page')).toBeInTheDocument();
+    expect(await screen.findByText('review-page')).toBeInTheDocument();
   });
 });
 
 describe('setup route', () => {
-  it('renders SetupPage at /setup when signed in', () => {
+  it('renders SetupPage at /setup when signed in', async () => {
     useAuthMock.mockReturnValue({ status: 'signedIn', user: { uid: 'u1', email: 't@x.edu' } });
     render(
       <MemoryRouter initialEntries={['/setup']}>
         <AppRoutes />
       </MemoryRouter>,
     );
-    expect(screen.getByText('setup-page')).toBeInTheDocument();
+    expect(await screen.findByText('setup-page')).toBeInTheDocument();
   });
 });
 

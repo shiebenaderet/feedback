@@ -35,7 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState({ status: 'signedOut', user: null });
         return;
       }
-      // Enforce the allowlist client-side; Firestore rules are the real gate.
+      // Enforce the allowlist client-side. NOTE: the Firestore rules guarantee
+      // cross-tenant isolation (a teacher can only ever touch their OWN uid
+      // tree) but do NOT enforce this allowlist server-side — see firestore.rules
+      // for how to add a server-side email check before storing real PII.
       if (isEmailAllowed(user.email, allowlist)) {
         setState({ status: 'signedIn', user });
       } else {

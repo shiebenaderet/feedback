@@ -59,6 +59,13 @@ export interface Batch {
   status: 'draft' | 'sending' | 'sent';
   gradingPeriod?: GradingPeriod; // stamped at the grading-period step before send
   label?: string; // optional free-text round label
+  unit?: string; // optional unit/topic this round covers (e.g. "Revolution"), stamped to history
+  /**
+   * Quick-round targeting: when set, this round is intended only for these
+   * students, so review's "skipped student" warning ignores everyone else.
+   * Absent → the round targets the whole period roster (the normal full round).
+   */
+  targetStudentIds?: string[];
 }
 
 // AUTO slot keys are exactly: name, semester.
@@ -114,6 +121,8 @@ export interface FeedbackHistoryEntry {
   gradingPeriod: GradingPeriod;
   /** Optional human label, e.g. the shared header / batch name. */
   label?: string;
+  /** Optional unit/topic this feedback covered (e.g. "Revolution"). */
+  unit?: string;
   /** The exact message text the student received. */
   finalText: string;
   /** Derived tags, re-derivable from usedEntries under a future mapping. */

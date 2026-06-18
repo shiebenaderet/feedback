@@ -40,7 +40,8 @@ async function readBy(
 /**
  * All feedbackHistory entries for one period, across every student.
  * Uses a collection-group query so it spans the per-student subcollections;
- * the security rules still scope this to the signed-in teacher's tree.
+ * the security rules confine this to the signed-in teacher's own uid tree
+ * (cross-tenant isolation), so the group query can only ever return their docs.
  * `uid` is accepted for call-site symmetry and future per-uid scoping.
  */
 export async function listPeriodHistory(

@@ -67,12 +67,12 @@ export async function getBatch(
 }
 
 
-/** Updates editable batch fields: shared header and the grading-period stamp. */
+/** Updates editable batch fields: shared header, grading-period stamp, unit, and quick-round targets. */
 export async function updateBatch(
   db: Firestore,
   uid: string,
   batchId: string,
-  patch: Partial<Pick<Batch, 'sharedHeader' | 'gradingPeriod' | 'label'>>,
+  patch: Partial<Pick<Batch, 'sharedHeader' | 'gradingPeriod' | 'label' | 'unit' | 'targetStudentIds'>>,
 ): Promise<void> {
   await updateDoc(doc(db, `teachers/${uid}/batches/${batchId}`), patch);
 }

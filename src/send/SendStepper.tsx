@@ -7,6 +7,8 @@ export interface SendStepperProps {
   sent: Record<string, boolean>;
   onMarkSent: (id: string) => void;
   onMarkAllSent: () => void;
+  /** Shared email subject line; shown so Mode-B users can copy it into Gmail. */
+  subject?: string;
 }
 
 /**
@@ -20,6 +22,7 @@ export function SendStepper({
   sent,
   onMarkSent,
   onMarkAllSent,
+  subject,
 }: SendStepperProps) {
   const [index, setIndex] = useState(0);
   const current = messages[index];
@@ -139,6 +142,31 @@ export function SendStepper({
             Student {index + 1} of {total}
           </span>
         </div>
+
+        {/* subject */}
+        {subject && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: tokens.space(1.5) }}>
+            <span style={{ fontSize: 13, color: tokens.color.subtle }}>
+              Subject: {subject}
+            </span>
+            <button
+              type="button"
+              onClick={() => copy(subject)}
+              style={{
+                background: tokens.color.panelAlt,
+                color: tokens.color.teal,
+                border: `1px solid ${tokens.color.border}`,
+                borderRadius: 7,
+                padding: '3px 9px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Copy subject
+            </button>
+          </div>
+        )}
 
         {/* message */}
         <div
